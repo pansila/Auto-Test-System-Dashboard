@@ -6,8 +6,10 @@
 import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
+import { debounce } from '@/utils'
+import { fetchList } from '@/api/taskStats'
 
-const animationDuration = 6000
+const animationDuration = 3000
 
 export default {
   mixins: [resize],
@@ -27,13 +29,27 @@ export default {
   },
   data() {
     return {
-      chart: null
+      succeeded: [],
+      failed: [],
+      chart: null,
+      days: ['-6d', '-5d', '-4d', '-3d', '-2d', '-1d', '0d'],
+      listQuery: {
+        start_date: Date.now() - 604800000,
+        end_date: Date.now()
+      }
     }
   },
   mounted() {
     this.$nextTick(() => {
       this.initChart()
     })
+    this.__resizeHandler = debounce(() => {
+      if (this.chart) {
+        this.chart.resize()
+      }
+    }, 100)
+    window.addEventListener('resize', this.__resizeHandler)
+    this.fetchData()
   },
   beforeDestroy() {
     if (!this.chart) {
@@ -62,7 +78,7 @@ export default {
         },
         xAxis: [{
           type: 'category',
-          data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          data: this.days,
           axisTick: {
             alignWithLabel: true
           }
@@ -74,27 +90,46 @@ export default {
           }
         }],
         series: [{
-          name: 'pageA',
+          name: 'Succeeded',
           type: 'bar',
           stack: 'vistors',
           barWidth: '60%',
-          data: [79, 52, 200, 334, 390, 330, 220],
+          data: this.succeeded,
           animationDuration
         }, {
-          name: 'pageB',
+          name: 'Failed',
           type: 'bar',
           stack: 'vistors',
           barWidth: '60%',
-          data: [80, 52, 200, 334, 390, 330, 220],
-          animationDuration
-        }, {
-          name: 'pageC',
-          type: 'bar',
-          stack: 'vistors',
-          barWidth: '60%',
-          data: [30, 52, 200, 334, 390, 330, 220],
+          data: this.failed,
           animationDuration
         }]
+      })
+    },
+    fetchData() {
+      fetchList(this.listQuery).then(data => {
+        const items = data
+        for (let i = 0; i < items.length; i++) {
+          this.succeeded[i] = items[i].succeeded
+          this.failed[i] = items[i].failed
+        }
+        this.chart.setOption({
+          series: [{
+            name: 'Succeeded',
+            type: 'bar',
+            stack: 'vistors',
+            barWidth: '60%',
+            data: this.succeeded,
+            animationDuration
+          }, {
+            name: 'Failed',
+            type: 'bar',
+            stack: 'vistors',
+            barWidth: '60%',
+            data: this.failed,
+            animationDuration
+          }]
+        })
       })
     }
   }

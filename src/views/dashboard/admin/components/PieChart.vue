@@ -6,6 +6,8 @@
 import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
+import { debounce } from '@/utils'
+import { fetchList } from '@/api/taskStats'
 
 export default {
   mixins: [resize],
@@ -25,13 +27,28 @@ export default {
   },
   data() {
     return {
-      chart: null
+      succeeded: 0,
+      failed: 0,
+      running: 0,
+      waiting: 0,
+      chart: null,
+      listQuery: {
+        start_date: Date.now() - 604800000,
+        end_date: Date.now()
+      }
     }
   },
   mounted() {
     this.$nextTick(() => {
       this.initChart()
     })
+    this.__resizeHandler = debounce(() => {
+      if (this.chart) {
+        this.chart.resize()
+      }
+    }, 100)
+    window.addEventListener('resize', this.__resizeHandler)
+    this.fetchData()
   },
   beforeDestroy() {
     if (!this.chart) {
@@ -52,26 +69,64 @@ export default {
         legend: {
           left: 'center',
           bottom: '10',
-          data: ['Industries', 'Technology', 'Forex', 'Gold', 'Forecasts']
+          data: ['Tests Succeeded', 'Tests Failed', 'Tests Running', 'Tests Waiting']
         },
         series: [
           {
-            name: 'WEEKLY WRITE ARTICLES',
+            name: 'WEEKLY TEST STATISTICS',
             type: 'pie',
             roseType: 'radius',
             radius: [15, 95],
             center: ['50%', '38%'],
             data: [
-              { value: 320, name: 'Industries' },
-              { value: 240, name: 'Technology' },
-              { value: 149, name: 'Forex' },
-              { value: 100, name: 'Gold' },
-              { value: 59, name: 'Forecasts' }
+              { value: 320, name: 'Tests Succeeded' },
+              { value: 240, name: 'Tests Failed' },
+              { value: 149, name: 'Tests Running' },
+              { value: 100, name: 'Tests Waiting' }
             ],
             animationEasing: 'cubicInOut',
             animationDuration: 2600
           }
         ]
+      })
+    },
+    fetchData() {
+      fetchList(this.listQuery).then(data => {
+        const items = data
+        let succeeded = 0
+        let failed = 0
+        let running = 0
+        let waiting = 0
+        for (let i = 0; i < items.length; i++) {
+          succeeded += items[i].succeeded
+          failed += items[i].failed
+          running += items[i].running
+          waiting += items[i].waiting
+        }
+        this.succeeded = succeeded
+        this.failed = failed
+        this.running = running
+        this.waiting = waiting
+
+        this.chart.setOption({
+          series: [
+            {
+              name: 'WEEKLY TEST STATISTICS',
+              type: 'pie',
+              roseType: 'radius',
+              radius: [15, 95],
+              center: ['50%', '38%'],
+              data: [
+                { value: this.succeeded, name: 'Tests Succeeded' },
+                { value: this.failed, name: 'Tests Failed' },
+                { value: this.running, name: 'Tests Running' },
+                { value: this.waiting, name: 'Tests Waiting' }
+              ],
+              animationEasing: 'cubicInOut',
+              animationDuration: 2600
+            }
+          ]
+        })
       })
     }
   }

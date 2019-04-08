@@ -1,0 +1,86 @@
+<template>
+  <div>
+    <el-table
+      v-loading="listLoading"
+      :data="list"
+      style="width: 100%;padding-top: 15px;"
+      stripe
+    >
+      <el-table-column label="Test Suite" min-width="200">
+        <template slot-scope="scope">
+          {{ scope.row.test_suite }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Run Date" width="195" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.run_date.$date | dateFilter }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Tester" width="200" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.tester }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Status" width="100" align="center">
+        <template slot-scope="scope">
+          <el-tag :type="scope.row.status | statusFilter">
+            {{ scope.row.status }}
+          </el-tag>
+        </template>
+      </el-table-column>
+    </el-table>
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="fetchData" />
+  </div>
+</template>
+
+<script>
+import { fetchList } from '@/api/testResult'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+
+export default {
+  components: { Pagination },
+  filters: {
+    statusFilter(status) {
+      const statusMap = {
+        successful: 'success',
+        failed: 'danger'
+      }
+      return statusMap[status]
+    },
+    dateFilter(time) {
+      const date = new Date()
+      date.setTime(time)
+      return date.toLocaleString({ year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric' })
+    }
+  },
+  data() {
+    return {
+      list: null,
+      total: 0,
+      listLoading: true,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        importance: undefined,
+        title: undefined,
+        type: undefined,
+        sort: '+id'
+      }
+    }
+  },
+  created() {
+    this.fetchData()
+  },
+  methods: {
+    fetchData() {
+      this.listLoading = true
+      fetchList(this.listQuery).then(data => {
+        this.listLoading = false
+        this.list = data.items.map(JSON.parse)
+        this.total = data.total
+      })
+    }
+  }
+}
+</script>
