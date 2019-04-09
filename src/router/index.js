@@ -7,9 +7,10 @@ Vue.use(Router)
 import Layout from '@/layout'
 
 /* Router Modules */
-import componentsRouter from './modules/components'
-import chartsRouter from './modules/charts'
-import tableRouter from './modules/table'
+
+/** note: sub-menu only appear when children.length>=1
+ *  detail see  https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html
+ **/
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -95,93 +96,81 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/guide',
+    path: '/test-reschedule',
     component: Layout,
-    redirect: '/guide/index',
     children: [
       {
         path: 'index',
-        component: () => import('@/views/guide/index'),
-        name: 'Guide',
-        meta: { title: 'Guide', icon: 'guide', noCache: true }
+        component: () => import('@/views/test-report/index'),
+        name: 'test-reschedule',
+        meta: { title: 'Test Reschedule', icon: 'nested', noCache: true, affix: true }
       }
     ]
   },
   {
-    path: '/profile',
+    path: '/edit-test',
     component: Layout,
-    redirect: '/profile/index',
-    hidden: true,
     children: [
       {
         path: 'index',
-        component: () => import('@/views/profile/index'),
-        name: 'Profile',
-        meta: { title: 'Profile', icon: 'user', noCache: true }
+        component: () => import('@/views/test-report/index'),
+        name: 'edit-test',
+        meta: { title: 'Edit Test', icon: 'edit', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
+    path: '/test-report',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/test-report/index'),
+        name: 'test-report',
+        meta: { title: 'Test Report', icon: 'chart', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
+    path: '/test-endpoint',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/test-report/index'),
+        name: 'test-endpoint',
+        meta: { title: 'Test Endpoint', icon: 'tree', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
+    path: '/test-store',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/test-report/index'),
+        name: 'test-store',
+        meta: { title: 'Test Store', icon: 'example', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
+    path: '/contact-us',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/test-report/index'),
+        name: 'contact-us',
+        meta: { title: 'Contact Us', icon: 'wechat', noCache: true, affix: true }
       }
     ]
   }
 ]
 
-/**
- * asyncRoutes
- * the routes that need to be dynamically loaded based on user roles
- */
 export const asyncRoutes = [
   /** When your routing table is too long, you can split it into small modules**/
-  componentsRouter,
-  chartsRouter,
-  tableRouter,
-
-  {
-    path: '/tab',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/tab/index'),
-        name: 'Tab',
-        meta: { title: 'Tab', icon: 'tab' }
-      }
-    ]
-  },
-
-  {
-    path: '/excel',
-    component: Layout,
-    redirect: '/excel/export-excel',
-    name: 'Excel',
-    meta: {
-      title: 'Excel',
-      icon: 'excel'
-    },
-    children: [
-      {
-        path: 'export-excel',
-        component: () => import('@/views/excel/export-excel'),
-        name: 'ExportExcel',
-        meta: { title: 'Export Excel' }
-      },
-      {
-        path: 'export-selected-excel',
-        component: () => import('@/views/excel/select-excel'),
-        name: 'SelectExcel',
-        meta: { title: 'Export Selected' }
-      },
-      {
-        path: 'export-merge-header',
-        component: () => import('@/views/excel/merge-header'),
-        name: 'MergeHeader',
-        meta: { title: 'Merge Header' }
-      },
-      {
-        path: 'upload-excel',
-        component: () => import('@/views/excel/upload-excel'),
-        name: 'UploadExcel',
-        meta: { title: 'Upload Excel' }
-      }
-    ]
-  },
 
   { path: '*', redirect: '/404', hidden: true }
 ]
