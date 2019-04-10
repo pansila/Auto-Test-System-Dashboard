@@ -106,30 +106,28 @@ export default {
         }]
       })
     },
-    fetchData() {
-      fetchList(this.listQuery).then(data => {
-        const items = data
-        for (let i = 0; i < items.length; i++) {
-          this.succeeded[i] = items[i].succeeded
-          this.failed[i] = items[i].failed
-        }
-        this.chart.setOption({
-          series: [{
-            name: 'Succeeded',
-            type: 'bar',
-            stack: 'vistors',
-            barWidth: '60%',
-            data: this.succeeded,
-            animationDuration
-          }, {
-            name: 'Failed',
-            type: 'bar',
-            stack: 'vistors',
-            barWidth: '60%',
-            data: this.failed,
-            animationDuration
-          }]
-        })
+    async fetchData() {
+      const items = await fetchList(this.listQuery)
+      for (const i in items) {
+        this.succeeded[i] = items[i].succeeded
+        this.failed[i] = items[i].failed
+      }
+      this.chart.setOption({
+        series: [{
+          name: 'Succeeded',
+          type: 'bar',
+          stack: 'vistors',
+          barWidth: '60%',
+          data: this.succeeded,
+          animationDuration
+        }, {
+          name: 'Failed',
+          type: 'bar',
+          stack: 'vistors',
+          barWidth: '60%',
+          data: this.failed,
+          animationDuration
+        }]
       })
     }
   }

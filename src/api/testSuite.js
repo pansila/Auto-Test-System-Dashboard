@@ -1,8 +1,16 @@
 import request from '@/utils/request'
 
-export function fetchList(query) {
+export function fetchTests(query) {
   return request({
     url: '/test/',
+    method: 'get',
+    params: query
+  })
+}
+
+export function fetchTest(test, query) {
+  return request({
+    url: '/test/' + test,
     method: 'get',
     params: query
   })
@@ -32,5 +40,20 @@ export function uploadFiles(data) {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
+  })
+}
+
+export function updateTask(data) {
+  return request({
+    url: '/task/update',
+    method: 'post',
+    data
+  })
+}
+
+export function getTaskResourceList(data) {
+  return request({
+    url: '/taskresource/list/' + data,
+    method: 'get'
   })
 }

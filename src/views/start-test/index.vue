@@ -7,8 +7,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="Test Endpoints">
-        <el-select v-model="form.endpoints" placeholder="Please select test endpoints to perform the task" multiple>
-          <el-option v-for="e in endpoints" :key="e.address" :label="e.address" :value="e.address" />
+        <el-select v-model="form.endpoints" placeholder="Please select test endpoints to run" multiple>
+          <el-option v-for="e in endpoints" :key="e.address" :label="e.name + ' (' + e.address + ')'" :value="e.address" />
         </el-select>
       </el-form-item>
       <el-form-item label="Parallization">
@@ -18,7 +18,7 @@
         </el-radio-group>
       </el-form-item>
       <el-form-item label="Test Cases">
-        <el-select v-model="form.test_cases" placeholder="Please select test endpoints to perform the task" multiple @change="onTestCaseChange">
+        <el-select v-model="form.test_cases" placeholder="Please select test cases to run" multiple @change="onTestCaseChange">
           <el-option v-for="t in test_cases" :key="t" :label="t | replaceSpace" :value="t" />
         </el-select>
         <el-checkbox v-model="form.test_cases_all">All Test Cases</el-checkbox>
@@ -51,8 +51,7 @@
       <el-form-item label="Upload Files">
         <el-upload
           class="upload-demo"
-          :action="uploadURL"
-          :on-preview="handlePreview"
+          action="http://abc.com"
           :on-remove="handleRemove"
           :before-remove="beforeRemove"
           multiple
@@ -76,7 +75,7 @@
 </template>
 
 <script>
-import { fetchList, fetchEndpoints, startTest, uploadFiles } from '@/api/testSuite'
+import { fetchTests, fetchEndpoints, startTest, uploadFiles } from '@/api/testSuite'
 
 export default {
   name: 'StartTest',
@@ -87,7 +86,6 @@ export default {
   },
   data() {
     return {
-      uploadURL: process.env.BASE_API + '/taskresource/',
       tests: [],
       endpoints: [],
       fileList: [],
@@ -197,13 +195,20 @@ export default {
       }
       this.resource_id = undefined
     },
-    fetchData() {
-      fetchList(this.listQuery).then(data => {
-        this.tests = data
-      })
-      fetchEndpoints().then(data => {
-        this.endpoints = data
-      })
+    async fetchData() {
+      this.listLoading = true
+      try {
+        this.tests = await fetchTests(this.listQuery)
+      } catch (error) {
+        console.error(error)
+      }
+
+      try {
+        this.endpoints = await fetchEndpoints()
+      } catch (error) {
+        console.error(error)
+      }
+      this.listLoading = false
     },
     onTestSuiteChange(test_suite_idx) {
       console.log(test_suite_idx)

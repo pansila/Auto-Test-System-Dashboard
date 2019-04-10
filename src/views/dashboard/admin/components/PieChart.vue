@@ -90,43 +90,41 @@ export default {
         ]
       })
     },
-    fetchData() {
-      fetchList(this.listQuery).then(data => {
-        const items = data
-        let succeeded = 0
-        let failed = 0
-        let running = 0
-        let waiting = 0
-        for (let i = 0; i < items.length; i++) {
-          succeeded += items[i].succeeded
-          failed += items[i].failed
-          running += items[i].running
-          waiting += items[i].waiting
-        }
-        this.succeeded = succeeded
-        this.failed = failed
-        this.running = running
-        this.waiting = waiting
+    async fetchData() {
+      const items = await fetchList(this.listQuery)
+      let succeeded = 0
+      let failed = 0
+      let running = 0
+      let waiting = 0
+      for (const i in items) {
+        succeeded += items[i].succeeded
+        failed += items[i].failed
+        running += items[i].running
+        waiting += items[i].waiting
+      }
+      this.succeeded = succeeded
+      this.failed = failed
+      this.running = running
+      this.waiting = waiting
 
-        this.chart.setOption({
-          series: [
-            {
-              name: 'WEEKLY TEST STATISTICS',
-              type: 'pie',
-              roseType: 'radius',
-              radius: [15, 95],
-              center: ['50%', '38%'],
-              data: [
-                { value: this.succeeded, name: 'Tests Succeeded' },
-                { value: this.failed, name: 'Tests Failed' },
-                { value: this.running, name: 'Tests Running' },
-                { value: this.waiting, name: 'Tests Waiting' }
-              ],
-              animationEasing: 'cubicInOut',
-              animationDuration: 2600
-            }
-          ]
-        })
+      this.chart.setOption({
+        series: [
+          {
+            name: 'WEEKLY TEST STATISTICS',
+            type: 'pie',
+            roseType: 'radius',
+            radius: [15, 95],
+            center: ['50%', '38%'],
+            data: [
+              { value: this.succeeded, name: 'Tests Succeeded' },
+              { value: this.failed, name: 'Tests Failed' },
+              { value: this.running, name: 'Tests Running' },
+              { value: this.waiting, name: 'Tests Waiting' }
+            ],
+            animationEasing: 'cubicInOut',
+            animationDuration: 2600
+          }
+        ]
       })
     }
   }

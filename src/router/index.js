@@ -156,6 +156,18 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/document',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/test-report/index'),
+        name: 'document',
+        meta: { title: 'Document', icon: 'documentation', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
     path: '/contact-us',
     component: Layout,
     children: [

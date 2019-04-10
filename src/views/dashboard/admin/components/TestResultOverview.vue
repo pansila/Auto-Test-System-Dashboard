@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { fetchList } from '@/api/testResult'
+import { fetchTasks } from '@/api/testResult'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
@@ -73,13 +73,12 @@ export default {
     this.fetchData()
   },
   methods: {
-    fetchData() {
+    async fetchData() {
       this.listLoading = true
-      fetchList(this.listQuery).then(data => {
-        this.listLoading = false
-        this.list = data.items.map(JSON.parse)
-        this.total = data.total
-      })
+      const data = await fetchTasks(this.listQuery)
+      this.listLoading = false
+      this.list = Array.map(data.items, JSON.parse)
+      this.total = data.total
     }
   }
 }

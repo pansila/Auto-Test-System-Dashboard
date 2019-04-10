@@ -1,48 +1,205 @@
 <template>
   <div class="page-container">
-    <el-table :data="variables" border fit style="width: 100%">
-      <el-table-column label="Name" min-width="50px">
+    <div class="filter-container">
+      <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-select v-model="listQuery.priority" placeholder="priority" clearable style="width: 120px" class="filter-item">
+        <el-option v-for="item in priorityOptions" :key="item.key" :label="item.name" :value="item.key" />
+      </el-select>
+      <el-select v-model="listQuery.endpoint" placeholder="endpoint" clearable class="filter-item" style="width: 240px">
+        <el-option v-for="item in endpoints" :key="item.address" :label="item.name + ' (' + item.address + ')'" :value="item.address" />
+      </el-select>
+      <el-select v-model="listQuery.sort" style="width: 160px" class="filter-item" @change="handleFilter">
+        <el-option v-for="item in sortOptions" :key="item.key" :label="item.label" :value="item.key" />
+      </el-select>
+      <el-date-picker
+        v-model="listQuery.start_date"
+        type="date"
+        placeholder="Start Date"
+        :picker-options="pickerOptions1"
+        class="filter-item"
+      />
+      <el-date-picker
+        v-model="listQuery.end_date"
+        align="right"
+        type="date"
+        placeholder="End Date"
+        :picker-options="pickerOptions2"
+        class="filter-item"
+      />
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">{{ 'search' }}</el-button>
+    </div>
+
+    <el-table
+      v-loading="listLoading"
+      :data="tasks"
+      border
+      fit
+      style="width: 100%"
+    >
+      <el-table-column label="Test Suite" min-width="200">
         <template slot-scope="scope">
-          <span style="margin-left: 10px">{{ scope.row.name }}</span>
+          {{ scope.row.test_suite }}
         </template>
       </el-table-column>
-      <el-table-column label="Value" min-width="100px">
+      <el-table-column label="Test Comment" min-width="200">
         <template slot-scope="scope">
           <template v-if="scope.row.edit">
-            <el-input v-model="scope.row.value" class="edit-input" size="small" />
+            <el-input v-model="scope.row.comment" class="edit-input" size="small" />
             <el-button class="cancel-btn" size="small" icon="el-icon-refresh" type="warning" @click="cancelEdit(scope.row)">cancel</el-button>
           </template>
-          <span v-else style="margin-left: 10px">{{ scope.row.value }}</span>
+          <span v-else style="margin-left: 10px">{{ scope.row.comment }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Action">
+      <el-table-column label="Run Date" width="195" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.run_date.$date | dateFilter }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Tester" width="200" align="center">
+        <template slot-scope="scope">
+          {{ scope.row.tester }}
+        </template>
+      </el-table-column>
+      <el-table-column label="Status" width="100" align="center">
+        <template slot-scope="scope">
+          <el-tag :type="scope.row.status | statusFilter">
+            {{ scope.row.status }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="Action" align="center">
         <template slot-scope="scope">
           <el-button v-if="scope.row.edit" type="success" size="small" icon="el-icon-circle-check-outline" @click="confirmEdit(scope.row)">OK</el-button>
           <el-button v-else type="primary" size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
-          <el-button size="small" @click="handleReset(scope.$index, scope.row)">Reset</el-button>
+          <el-button size="small" @click="handleRetrigger(scope.$index, scope.row)">Retrigger</el-button>
         </template>
       </el-table-column>
     </el-table>
+
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="fetchTaskList" />
+
+    <el-dialog title="Update" :visible.sync="dialogFormVisible">
+      <el-form ref="form" v-loading="listFormLoading" :model="form" label-width="120px">
+        <el-form-item label="Test Suite">
+          <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run">
+            <el-option v-for="(t, i) in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="i" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Test Endpoints">
+          <el-select v-model="form.endpoints" placeholder="Please select test endpoints to run" multiple>
+            <el-option v-for="e in endpoints" :key="e.address" :label="e.name + ' (' + e.address + ')'" :value="e.address" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Parallization">
+          <el-radio-group v-model="form.parallelization">
+            <el-radio label="0">Run on any of selected endpoints</el-radio>
+            <el-radio label="1">Run on all selected endpoints</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="Test Cases">
+          <el-select v-model="form.test_cases" placeholder="Please select test cases to run" multiple @change="onTestCaseChange">
+            <el-option v-for="t in test_cases" :key="t" :label="t | replaceSpace" :value="t" />
+          </el-select>
+          <el-checkbox v-model="form.test_cases_all">All Test Cases</el-checkbox>
+        </el-form-item>
+        <el-form-item label="Variables">
+          <el-table :data="variables" border fit style="width: 100%">
+            <el-table-column label="Name" min-width="50px">
+              <template slot-scope="scope">
+                <span style="margin-left: 10px">{{ scope.row.name }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="Value" min-width="100px">
+              <template slot-scope="scope">
+                <template v-if="scope.row.edit">
+                  <el-input v-model="scope.row.value" class="edit-input" size="small" />
+                  <el-button class="cancel-btn" size="small" icon="el-icon-refresh" type="warning" @click="cancelVariableEdit(scope.row)">cancel</el-button>
+                </template>
+                <span v-else style="margin-left: 10px">{{ scope.row.value }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="Action">
+              <template slot-scope="scope">
+                <el-button v-if="scope.row.edit" type="success" size="small" icon="el-icon-circle-check-outline" @click="confirmVariableEdit(scope.row)">OK</el-button>
+                <el-button v-else type="primary" size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
+                <el-button size="small" @click="handleVariableReset(scope.$index, scope.row)">Reset</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+        <el-form-item label="Upload Files">
+          <el-upload
+            class="upload-demo"
+            action="http://abc.com"
+            :on-remove="handleRemove"
+            :before-remove="beforeRemove"
+            multiple
+            :auto-upload="false"
+            :limit="3"
+            :on-exceed="handleExceed"
+            :on-change="onUploadFileChange"
+            :file-list="fileList"
+          >
+            <el-button size="small" type="primary">Upload</el-button>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="Tester">
+          <el-input v-model="form.tester" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSubmit">Start</el-button>
+          <el-button>Reset</el-button>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">{{ 'cancel' }}</el-button>
+        <el-button type="primary" @click="onSubmit">{{ 'confirm' }}</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { fetchList, fetchEndpoints, startTest, uploadFiles } from '@/api/testSuite'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+import { fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList } from '@/api/testSuite'
+import { fetchTasks } from '@/api/testResult'
+import waves from '@/directive/waves' // Waves directive
 
 export default {
   name: 'StartTest',
+  components: { Pagination },
+  directives: { waves },
   filters: {
     replaceSpace(data) {
       return data.replace(/-/g, ' ')
+    },
+    statusFilter(status) {
+      const statusMap = {
+        successful: 'success',
+        failed: 'danger'
+      }
+      return statusMap[status]
+    },
+    dateFilter(time) {
+      const date = new Date()
+      date.setTime(time)
+      return date.toLocaleString({ year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric' })
     }
   },
   data() {
     return {
-      uploadURL: process.env.BASE_API + '/taskresource/',
       tests: [],
+      tasks: [],
       endpoints: [],
-      fileList: [],
+      variables_retrigger: [],
+      total: 0,
       listLoading: false,
+      listFormLoading: false,
+      priorityOptions: [{ key: 1, name: 'Low' }, { key: 2, name: 'Medium' }, { key: 3, name: 'High' }],
+      sortOptions: [{ label: 'Date Ascending', key: '+run_date' }, { label: 'Date Descending', key: '-run_date' }],
+      dialogFormVisible: false,
+      fileList: [],
       resource_id: undefined,
       form: {
         tester: '',
@@ -51,6 +208,52 @@ export default {
         endpoints: [],
         test_cases: [],
         test_cases_all: true
+      },
+      listQuery: {
+        page: 1,
+        limit: 10,
+        priority: undefined,
+        title: undefined,
+        type: undefined,
+        sort: '-run_date',
+        start_date: undefined,
+        end_date: undefined
+      },
+      pickerOptions1: {
+        disabledDate(time) {
+          return time.getTime() > Date.now()
+        },
+        shortcuts: [{
+          text: 'Today',
+          onClick(picker) {
+            picker.$emit('pick', new Date())
+          }
+        }, {
+          text: 'Yesterday',
+          onClick(picker) {
+            const date = new Date()
+            date.setTime(date.getTime() - 3600 * 1000 * 24)
+            picker.$emit('pick', date)
+          }
+        }, {
+          text: 'A Week Ago',
+          onClick(picker) {
+            const date = new Date()
+            date.setTime(date.getTime() - 3600 * 1000 * 24 * 7)
+            picker.$emit('pick', date)
+          }
+        }]
+      },
+      pickerOptions2: {
+        disabledDate(time) {
+          return time.getTime() > Date.now()
+        },
+        shortcuts: [{
+          text: 'Today',
+          onClick(picker) {
+            picker.$emit('pick', new Date())
+          }
+        }]
       }
     }
   },
@@ -76,51 +279,71 @@ export default {
             variables.push({ name: v, value: vars[v], edit: false, originalValue: vars[v] })
           }
         }
+        for (const v in this.variables_retrigger) {
+          for (const vv in variables) {
+            if (variables[vv].name === v) {
+              variables[vv].value = this.variables_retrigger[v]
+              variables[vv].originalValue = this.variables_retrigger[v]
+            }
+          }
+        }
       }
       return variables
     }
   },
   watch: {
   },
-  created() {
-    this.fetchData()
+  async created() {
+    this.fetchTaskList()
+
+    this.listLoading = true
+    try {
+      this.endpoints = await fetchEndpoints()
+    } catch (error) {
+      console.error(error)
+    }
+    this.listLoading = false
   },
   methods: {
     async onSubmit() {
       /** upload files **/
-      this.listLoading = true
+      this.listFormLoading = true
 
+      const formData = new FormData()
+      if (this.resource_id) {
+        formData.append('resource_id', this.resource_id)
+      }
       for (const idx in this.fileList) {
         const file = this.fileList[idx]
-        const formData = new FormData()
-        formData.append('file', file.raw)
-        if (this.resource_id) {
-          formData.append('resource_id', this.resource_id)
-        }
-        try {
-          const data = await uploadFiles(formData)
-          if (data.status === 0) {
-            this.resource_id = data.data
-          } else {
-            this.$message({
-              message: `Failed to upload files, status: ${data.status}`,
-              type: 'error'
-            })
-            this.resource_id = undefined
-            this.listLoading = false
-            return
-          }
-        } catch (error) {
-          this.resource_id = undefined
-          this.listLoading = false
-          return
+        if (file.url) {
+          formData.append('file', file.url)
+        } else {
+          formData.append('file', file.raw)
         }
       }
-      this.listLoading = false
+      try {
+        const data = await uploadFiles(formData)
+        if (data.status === 0) {
+          this.resource_id = data.data
+        } else {
+          this.$message({
+            message: `Failed to upload files, status: ${data.status}`,
+            type: 'error'
+          })
+          this.resource_id = undefined
+          this.listFormLoading = false
+          return
+        }
+      } catch (error) {
+        this.resource_id = undefined
+        this.listFormLoading = false
+        return
+      }
+      this.listFormLoading = false
 
       /** start the test **/
       const task_data = {}
-      this.listLoading = true
+      this.listFormLoading = true
 
       task_data.test_suite = this.tests[this.form.test_suite_idx].test_suite
       task_data.endpoint_list = this.form.endpoints
@@ -142,22 +365,43 @@ export default {
 
       try {
         await startTest(task_data)
-        this.listLoading = false
+        this.listFormLoading = false
+        this.dialogFormVisible = false
       } catch (error) {
-        this.listLoading = false
+        this.listFormLoading = false
       }
       this.resource_id = undefined
     },
-    fetchData() {
-      fetchList(this.listQuery).then(data => {
-        this.tests = data
-      })
-      fetchEndpoints().then(data => {
-        this.endpoints = data
-      })
+    async fetchTaskList() {
+      this.listLoading = true
+      try {
+        const data = await fetchTasks(this.listQuery)
+        this.listLoading = false
+        this.tasks = data.items.map(JSON.parse)
+        this.tasks.map(item => {
+          this.$set(item, 'edit', false)
+          item.oldComment = item.comment
+          return item
+        })
+        this.total = data.total
+      } catch (error) {
+        this.listLoading = false
+      }
     },
-    onTestSuiteChange(test_suite_idx) {
-      console.log(test_suite_idx)
+    async fetchTestList() {
+      this.listLoading = true
+      try {
+        this.tests = await fetchTests(this.listQuery)
+      } catch (error) {
+        console.error(error)
+      }
+
+      try {
+        this.endpoints = await fetchEndpoints()
+      } catch (error) {
+        console.error(error)
+      }
+      this.listLoading = false
     },
     onTestCaseChange(test_cases) {
       if (test_cases.length > 0) {
@@ -166,11 +410,11 @@ export default {
         this.form.test_cases_all = true
       }
     },
-    cancelEdit(row) {
+    cancelVariableEdit(row) {
       row.edit = false
       row.value = row.oldValue ? row.oldValue : row.originalValue
     },
-    confirmEdit(row) {
+    confirmVariableEdit(row) {
       row.edit = false
       row.oldValue = row.value
       this.$message({
@@ -178,7 +422,7 @@ export default {
         type: 'success'
       })
     },
-    handleReset(index, row) {
+    handleVariableReset(index, row) {
       row.edit = false
       row.value = row.originalValue
       this.$message({
@@ -197,6 +441,93 @@ export default {
     },
     onUploadFileChange(file, fileList) {
       this.fileList = fileList
+    },
+    handleFilter() {
+      this.listQuery.page = 1
+      const start_date = this.listQuery.start_date
+
+      if (start_date) {
+        const end_date = this.listQuery.end_date
+        const now = new Date()
+
+        if (start_date.getTime() === end_date.getTime()) {
+          end_date.setTime(end_date.getTime() + 3600 * 1000 * 24 - 1)
+        } else if (end_date.getDay() === now.getDay() &&
+          end_date.getMonth() === now.getMonth() &&
+          end_date.getFullYear() === now.getFullYear()) {
+          start_date.setHours(0)
+          start_date.setMinutes(0)
+          start_date.setSeconds(0)
+        }
+      } else {
+        this.listQuery.end_date = undefined
+      }
+      this.fetchTaskList()
+    },
+    cancelEdit(row) {
+      row.edit = false
+      row.comment = row.oldComment
+    },
+    async confirmEdit(row) {
+      row.edit = false
+      row.oldComment = row.comment
+      this.$message({
+        message: 'The value has been edited',
+        type: 'success'
+      })
+
+      this.listLoading = true
+      try {
+        await updateTask(row)
+      } catch (error) {
+        console.error(error)
+      }
+      this.listLoading = false
+    },
+    async handleRetrigger(index, row) {
+      const task = this.tasks[index]
+      let test
+
+      this.listFormLoading = true
+      this.fileList = []
+      try {
+        const fileList = await getTaskResourceList(task._id.$oid)
+        for (const i in fileList) {
+          this.$set(this.fileList, i, { name: fileList[i], url: process.env.BASE_API + `/taskresource/${task._id.$oid}?file=` + fileList[i] })
+        }
+      } catch (error) {
+        this.$message({
+          message: 'Resource files have been deleted',
+          type: 'error'
+        })
+      }
+
+      try {
+        await this.fetchTestList()
+        const data = await fetchTest(task.test_suite)
+        test = JSON.parse(data)
+        this.listFormLoading = false
+      } catch (error) {
+        this.listFormLoading = false
+        return
+      }
+
+      for (const i in this.tests) {
+        if (this.tests[i].test_suite === task.test_suite) {
+          this.form.test_suite_idx = +i
+          break
+        }
+      }
+      this.form.endpoints = task.endpoint_list
+      this.form.test_cases_all = task.testcases.length === 0 || test.test_cases.length === task.testcases.length
+      if (!this.form.test_cases_all) {
+        this.form.test_cases = task.test_cases
+      }
+      this.form.tester = task.tester
+      this.form.parallelization = task.parallelization === true ? '1' : '0'
+      this.variables_retrigger = task.variables
+
+      this.dialogFormVisible = true
     }
   }
 }

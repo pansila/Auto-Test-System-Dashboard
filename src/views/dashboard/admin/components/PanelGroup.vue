@@ -75,24 +75,22 @@ export default {
     handleSetLineChartData(type) {
       this.$emit('handleSetLineChartData', type)
     },
-    fetchData() {
-      fetchList(this.listQuery).then(data => {
-        const items = data
-        let finished = 0
-        let failed = 0
-        let running = 0
-        let waiting = 0
-        for (let i = 0; i < items.length; i++) {
-          finished += items[i].succeeded + items[i].failed
-          failed += items[i].failed
-          running += items[i].running
-          waiting += items[i].waiting
-        }
-        this.finished = finished
-        this.failed = failed
-        this.running = running
-        this.waiting = waiting
-      })
+    async fetchData() {
+      const items = await fetchList(this.listQuery)
+      let finished = 0
+      let failed = 0
+      let running = 0
+      let waiting = 0
+      for (const i in items) {
+        finished += items[i].succeeded + items[i].failed
+        failed += items[i].failed
+        running += items[i].running
+        waiting += items[i].waiting
+      }
+      this.finished = finished
+      this.failed = failed
+      this.running = running
+      this.waiting = waiting
     }
   }
 }
