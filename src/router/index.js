@@ -122,12 +122,21 @@ export const constantRoutes = [
   {
     path: '/test-report',
     component: Layout,
+    name: 'test-report',
+    noShowingChildren: true,
     children: [
       {
         path: 'index',
         component: () => import('@/views/test-report/index'),
-        name: 'test-report',
+        name: 'test-report-index',
         meta: { title: 'Test Report', icon: 'chart', noCache: true, affix: true }
+      },
+      {
+        path: 'test-detail',
+        component: () => import('@/views/test-report/testDetail'),
+        name: 'test-detail',
+        hidden: true,
+        meta: { title: 'Test Detail', icon: 'chart', noCache: true, affix: true }
       }
     ]
   },
@@ -152,6 +161,18 @@ export const constantRoutes = [
         component: () => import('@/views/test-report/index'),
         name: 'test-store',
         meta: { title: 'Test Store', icon: 'example', noCache: true, affix: true }
+      }
+    ]
+  },
+  {
+    path: '/users',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/test-report/index'),
+        name: 'users',
+        meta: { title: 'Users', icon: 'peoples', noCache: true, affix: true }
       }
     ]
   },

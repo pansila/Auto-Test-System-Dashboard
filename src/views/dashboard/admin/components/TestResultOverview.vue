@@ -62,10 +62,7 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        importance: undefined,
-        title: undefined,
-        type: undefined,
-        sort: '+id'
+        sort: '-run_date'
       }
     }
   },
@@ -77,7 +74,7 @@ export default {
       this.listLoading = true
       const data = await fetchTasks(this.listQuery)
       this.listLoading = false
-      this.list = Array.map(data.items, JSON.parse)
+      this.list = data.items.map(JSON.parse)
       this.total = data.total
     }
   }

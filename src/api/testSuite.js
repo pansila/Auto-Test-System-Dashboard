@@ -16,6 +16,15 @@ export function fetchTest(test, query) {
   })
 }
 
+export function fetchTestDetail(test, query) {
+  return request({
+    url: '/task/result/' + test,
+    method: 'get',
+    responseType: 'text',
+    params: query
+  })
+}
+
 export function startTest(data) {
   return request({
     url: '/task/',

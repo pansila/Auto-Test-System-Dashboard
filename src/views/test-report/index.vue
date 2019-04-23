@@ -36,12 +36,12 @@
       fit
       style="width: 100%"
     >
-      <el-table-column label="Test Suite" min-width="200">
+      <el-table-column label="Test Suite" min-width="100" header-align="center">
         <template slot-scope="scope">
-          {{ scope.row.test_suite }}
+          <span class="link-type" @click="onTestDetail(scope.row)">{{ scope.row.test_suite }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Test Comment" min-width="200">
+      <el-table-column label="Test Comment" min-width="100" header-align="center">
         <template slot-scope="scope">
           <template v-if="scope.row.edit">
             <el-input v-model="scope.row.comment" class="edit-input" size="small" />
@@ -55,9 +55,14 @@
           {{ scope.row.run_date.$date | dateFilter }}
         </template>
       </el-table-column>
-      <el-table-column label="Tester" width="200" align="center">
+      <el-table-column label="Tester" width="180" align="center">
         <template slot-scope="scope">
           {{ scope.row.tester }}
+        </template>
+      </el-table-column>
+      <el-table-column label="priority" width="80px">
+        <template slot-scope="scope">
+          <svg-icon v-for="n in +scope.row.priority" :key="n" icon-class="star" class="meta-item__icon" />
         </template>
       </el-table-column>
       <el-table-column label="Status" width="100" align="center">
@@ -67,11 +72,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Action" align="center">
+      <el-table-column label="Action" width="220" align="center">
         <template slot-scope="scope">
           <el-button v-if="scope.row.edit" type="success" size="small" icon="el-icon-circle-check-outline" @click="confirmEdit(scope.row)">OK</el-button>
-          <el-button v-else type="primary" size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
-          <el-button size="small" @click="handleRetrigger(scope.$index, scope.row)">Retrigger</el-button>
+          <el-button v-else size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
+          <el-button type="primary" size="small" @click="handleRetrigger(scope.$index, scope.row)">Retrigger</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -166,7 +171,7 @@ import { fetchTasks } from '@/api/testResult'
 import waves from '@/directive/waves' // Waves directive
 
 export default {
-  name: 'StartTest',
+  name: 'TestReport',
   components: { Pagination },
   directives: { waves },
   filters: {
@@ -291,8 +296,6 @@ export default {
       return variables
     }
   },
-  watch: {
-  },
   async created() {
     this.fetchTaskList()
 
@@ -378,10 +381,9 @@ export default {
         const data = await fetchTasks(this.listQuery)
         this.listLoading = false
         this.tasks = data.items.map(JSON.parse)
-        this.tasks.map(item => {
+        this.tasks.forEach(item => {
           this.$set(item, 'edit', false)
           item.oldComment = item.comment
-          return item
         })
         this.total = data.total
       } catch (error) {
@@ -528,6 +530,14 @@ export default {
       this.variables_retrigger = task.variables
 
       this.dialogFormVisible = true
+    },
+    onTestDetail(row) {
+      this.$router.push({
+        path: 'test-detail',
+        query: {
+          task_id: row._id.$oid
+        }
+      })
     }
   }
 }
