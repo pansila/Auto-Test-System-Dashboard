@@ -151,10 +151,6 @@
         <el-form-item label="Tester">
           <el-input v-model="form.tester" />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="onSubmit">Start</el-button>
-          <el-button>Reset</el-button>
-        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">{{ 'cancel' }}</el-button>
@@ -297,9 +293,9 @@ export default {
     }
   },
   async created() {
-    this.fetchTaskList()
-
     this.listLoading = true
+    await this.fetchTaskList()
+
     try {
       this.endpoints = await fetchEndpoints()
     } catch (error) {
@@ -379,7 +375,6 @@ export default {
       this.listLoading = true
       try {
         const data = await fetchTasks(this.listQuery)
-        this.listLoading = false
         this.tasks = data.items.map(JSON.parse)
         this.tasks.forEach(item => {
           this.$set(item, 'edit', false)
@@ -387,8 +382,9 @@ export default {
         })
         this.total = data.total
       } catch (error) {
-        this.listLoading = false
+        console.error(error)
       }
+      this.listLoading = false
     },
     async fetchTestList() {
       this.listLoading = true

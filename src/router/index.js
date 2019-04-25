@@ -146,7 +146,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/test-report/index'),
+        component: () => import('@/views/test-endpoint/index'),
         name: 'test-endpoint',
         meta: { title: 'Test Endpoint', icon: 'tree', noCache: true, affix: true }
       }
@@ -177,26 +177,26 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/document',
+    path: '/setting',
     component: Layout,
     children: [
       {
         path: 'index',
         component: () => import('@/views/test-report/index'),
-        name: 'document',
-        meta: { title: 'Document', icon: 'documentation', noCache: true, affix: true }
+        name: 'setting',
+        meta: { title: 'Setting', icon: 'tab', noCache: true, affix: true }
       }
     ]
   },
   {
-    path: '/contact-us',
+    path: '/help',
     component: Layout,
     children: [
       {
         path: 'index',
         component: () => import('@/views/test-report/index'),
-        name: 'contact-us',
-        meta: { title: 'Contact Us', icon: 'wechat', noCache: true, affix: true }
+        name: 'help',
+        meta: { title: 'Help', icon: 'documentation', noCache: true, affix: true }
       }
     ]
   }

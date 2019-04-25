@@ -33,11 +33,27 @@ export function startTest(data) {
   })
 }
 
-export function fetchEndpoints(data) {
+export function fetchEndpoints(query) {
   return request({
     url: '/endpoint/',
     method: 'get',
+    params: query
+  })
+}
+
+export function updateEndpoint(data) {
+  return request({
+    url: '/endpoint/',
+    method: 'post',
     data
+  })
+}
+
+export function deleteEndpoint(address) {
+  return request({
+    url: '/endpoint/',
+    method: 'delete',
+    params: { address: address }
   })
 }
 

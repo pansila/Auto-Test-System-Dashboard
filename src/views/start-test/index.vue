@@ -211,7 +211,6 @@ export default {
       this.listLoading = false
     },
     onTestSuiteChange(test_suite_idx) {
-      console.log(test_suite_idx)
     },
     onTestCaseChange(test_cases) {
       if (test_cases.length > 0) {
