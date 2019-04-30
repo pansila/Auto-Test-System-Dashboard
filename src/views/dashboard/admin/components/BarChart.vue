@@ -7,7 +7,7 @@ import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
 import { debounce } from '@/utils'
-import { fetchList } from '@/api/taskStats'
+import { fetchTaskList } from '@/api/testSuite'
 
 const animationDuration = 3000
 
@@ -107,7 +107,7 @@ export default {
       })
     },
     async fetchData() {
-      const items = await fetchList(this.listQuery)
+      const items = await fetchTaskList(this.listQuery)
       for (const i in items) {
         this.succeeded[i] = items[i].succeeded
         this.failed[i] = items[i].failed

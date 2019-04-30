@@ -7,7 +7,7 @@ import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
 import { debounce } from '@/utils'
-import { fetchList } from '@/api/taskStats'
+import { fetchTaskList } from '@/api/testSuite'
 
 export default {
   mixins: [resize],
@@ -91,7 +91,7 @@ export default {
       })
     },
     async fetchData() {
-      const items = await fetchList(this.listQuery)
+      const items = await fetchTaskList(this.listQuery)
       let succeeded = 0
       let failed = 0
       let running = 0

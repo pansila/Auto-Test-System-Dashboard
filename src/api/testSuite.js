@@ -33,6 +33,22 @@ export function startTest(data) {
   })
 }
 
+export function fetchTaskList(query) {
+  return request({
+    url: '/task/',
+    method: 'get',
+    params: query
+  })
+}
+
+export function updateTask(data) {
+  return request({
+    url: '/task/',
+    method: 'patch',
+    data
+  })
+}
+
 export function fetchEndpoints(query) {
   return request({
     url: '/endpoint/',
@@ -57,6 +73,22 @@ export function deleteEndpoint(address) {
   })
 }
 
+export function fetchQueuingTests(query) {
+  return request({
+    url: '/endpoint/queue/',
+    method: 'get',
+    params: query
+  })
+}
+
+export function updateTaskQueue(data) {
+  return request({
+    url: '/endpoint/queue/',
+    method: 'post',
+    data
+  })
+}
+
 export function uploadFiles(data) {
   return request({
     url: '/taskresource/',
@@ -68,17 +100,25 @@ export function uploadFiles(data) {
   })
 }
 
-export function updateTask(data) {
-  return request({
-    url: '/task/update',
-    method: 'post',
-    data
-  })
-}
-
 export function getTaskResourceList(data) {
   return request({
     url: '/taskresource/list/' + data,
     method: 'get'
+  })
+}
+
+export function fetchTasks(query) {
+  return request({
+    url: '/testresult/',
+    method: 'get',
+    params: query
+  })
+}
+
+export function cancelTask(task) {
+  return request({
+    url: '/task/',
+    method: 'delete',
+    data: task
   })
 }

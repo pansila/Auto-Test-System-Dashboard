@@ -163,7 +163,7 @@
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import { fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList } from '@/api/testSuite'
-import { fetchTasks } from '@/api/testResult'
+import { fetchTasks } from '@/api/testSuite'
 import waves from '@/directive/waves' // Waves directive
 
 export default {
@@ -177,7 +177,11 @@ export default {
     statusFilter(status) {
       const statusMap = {
         successful: 'success',
-        failed: 'danger'
+        failed: 'danger',
+        running: 'message',
+        waiting: 'warning',
+        cancelled: 'warning',
+        aborted: 'danger'
       }
       return statusMap[status]
     },

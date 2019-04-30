@@ -11,10 +11,17 @@
           <el-option v-for="e in endpoints" :key="e.address" :label="e.name + ' (' + e.address + ')'" :value="e.address" />
         </el-select>
       </el-form-item>
+      <el-form-item label="Priority">
+        <el-radio-group v-model="form.priority">
+          <el-radio label="1">Low</el-radio>
+          <el-radio label="2">Medium</el-radio>
+          <el-radio label="3">High</el-radio>
+        </el-radio-group>
+      </el-form-item>
       <el-form-item label="Parallization">
         <el-radio-group v-model="form.parallelization">
-          <el-radio label="0">Run on any of selected endpoints</el-radio>
-          <el-radio label="1">Run on all selected endpoints</el-radio>
+          <el-tooltip content="Run on any of selected endpoints"><el-radio label="0">Any</el-radio></el-tooltip>
+          <el-tooltip content="Run on all selected endpoints"><el-radio label="1">All</el-radio></el-tooltip>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="Test Cases">
@@ -93,6 +100,7 @@ export default {
       resource_id: undefined,
       form: {
         tester: '',
+        priority: '2',
         parallelization: '0',
         test_suite_idx: 0,
         endpoints: [],
@@ -176,6 +184,7 @@ export default {
       } else {
         task_data.parallelization = true
       }
+      task_data.priority = this.form.priority
       if (!this.form.test_cases_all) {
         task_data.test_cases = this.form.test_cases
       }

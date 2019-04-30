@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { fetchTasks } from '@/api/testResult'
+import { fetchTasks } from '@/api/testSuite'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {

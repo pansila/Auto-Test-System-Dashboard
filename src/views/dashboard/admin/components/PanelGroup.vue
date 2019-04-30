@@ -49,7 +49,7 @@
 
 <script>
 import CountTo from 'vue-count-to'
-import { fetchList } from '@/api/taskStats'
+import { fetchTaskList } from '@/api/testSuite'
 
 export default {
   components: {
@@ -76,7 +76,7 @@ export default {
       this.$emit('handleSetLineChartData', type)
     },
     async fetchData() {
-      const items = await fetchList(this.listQuery)
+      const items = await fetchTaskList(this.listQuery)
       let finished = 0
       let failed = 0
       let running = 0
