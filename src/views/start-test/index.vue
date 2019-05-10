@@ -171,11 +171,9 @@ export default {
           return
         }
       }
-      this.listLoading = false
 
       /** start the test **/
       const task_data = {}
-      this.listLoading = true
 
       task_data.test_suite = this.tests[this.form.test_suite_idx].test_suite
       task_data.endpoint_list = this.form.endpoints
@@ -198,10 +196,14 @@ export default {
 
       try {
         await startTest(task_data)
-        this.listLoading = false
+        this.$message({
+          message: 'Schedule the test successfully',
+          type: 'success'
+        })
       } catch (error) {
-        this.listLoading = false
+        console.error(error)
       }
+      this.listLoading = false
       this.resource_id = undefined
     },
     async fetchData() {

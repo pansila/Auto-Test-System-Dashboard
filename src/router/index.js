@@ -113,7 +113,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/test-report/index'),
+        component: () => import('@/views/edit-test/index'),
         name: 'edit-test',
         meta: { title: 'Edit Test', icon: 'edit', noCache: true, affix: true }
       }

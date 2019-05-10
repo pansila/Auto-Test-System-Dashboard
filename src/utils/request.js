@@ -72,7 +72,8 @@ service.interceptors.response.use(
     }
   },
   error => {
-    console.log('err' + error) // for debug
+    if (error.message.includes('304')) return
+    console.log('Err: ' + error) // for debug
     Message({
       message: error.message,
       type: 'error',

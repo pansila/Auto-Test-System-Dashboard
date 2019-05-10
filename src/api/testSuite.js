@@ -122,3 +122,48 @@ export function cancelTask(task) {
     data: task
   })
 }
+
+export function fetchScripts() {
+  return request({
+    url: '/script/',
+    method: 'get'
+  })
+}
+
+export function getScript(query, modified) {
+  return request({
+    url: '/script/',
+    method: 'get',
+    params: query,
+    headers: {
+      'Cache-Control': modified ? 'no-cache' : 'max-age=1'
+    }
+  })
+}
+
+export function updateScript(data) {
+  return request({
+    url: '/script/',
+    method: 'post',
+    data
+  })
+}
+
+export function removeScript(data) {
+  return request({
+    url: '/script/',
+    method: 'delete',
+    data
+  })
+}
+
+export function uploadScripts(data) {
+  return request({
+    url: '/script/upload/',
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
