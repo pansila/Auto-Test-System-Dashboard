@@ -196,7 +196,6 @@ export default {
 
       const path = []
       this.getScriptPath(path, scripts, this.currentNode.data)
-      console.log(path, scripts, this.currentNode.data)
 
       await updateScript({ file: path.join('/'), script_type: script_type || this.tabName, content: editor.getValue() })
       if (this.currentNode) { // current node could have been deleted after returning from udpating script

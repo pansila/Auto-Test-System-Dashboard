@@ -189,7 +189,7 @@ export default {
       const vars = this.variables
       task_data.variables = {}
       for (const idx in vars) {
-        task_data.variables[vars[idx].name] = vars[idx].value
+        task_data.variables[vars[idx].name] = JSON.parse(vars[idx].value)
       }
       task_data.upload_dir = this.resource_id
       task_data.tester = this.form.tester
@@ -213,6 +213,12 @@ export default {
       } catch (error) {
         console.error(error)
       }
+
+      this.tests.forEach(test => {
+        for (const k in test.variables) {
+          test.variables[k] = JSON.stringify(test.variables[k])
+        }
+      })
 
       try {
         this.endpoints = await fetchEndpoints()
