@@ -75,7 +75,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">Start</el-button>
-        <el-button>Reset</el-button>
+        <el-button @click="onReset">Reset</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -137,8 +137,8 @@ export default {
   },
   watch: {
   },
-  created() {
-    this.fetchData()
+  async created() {
+    await this.fetchData()
   },
   methods: {
     async onSubmit() {
@@ -188,9 +188,15 @@ export default {
       }
       const vars = this.variables
       task_data.variables = {}
-      for (const idx in vars) {
-        task_data.variables[vars[idx].name] = JSON.parse(vars[idx].value)
-      }
+      vars.forEach(v => {
+        if (v.value !== v.originalValue) {
+          try {
+            task_data.variables[v.name] = JSON.parse(v.value)
+          } catch (error) {
+            console.error(error)
+          }
+        }
+      })
       task_data.upload_dir = this.resource_id
       task_data.tester = this.form.tester
 
@@ -205,6 +211,11 @@ export default {
       }
       this.listLoading = false
       this.resource_id = undefined
+    },
+    async onReset() {
+      this.listLoading = true
+      await this.fetchData()
+      this.listLoading = false
     },
     async fetchData() {
       this.listLoading = true
@@ -238,7 +249,7 @@ export default {
     },
     cancelEdit(row) {
       row.edit = false
-      row.value = row.oldValue ? row.oldValue : row.originalValue
+      row.value = row.oldValue || row.originalValue
     },
     confirmEdit(row) {
       row.edit = false
