@@ -180,9 +180,9 @@ export default {
   methods: {
     async fetchScriptList() {
       try {
-        const response = await fetchScripts()
-        this.user_scripts = response.data.user_scripts.children
-        this.backing_scripts = response.data.backing_scripts.children
+        const data = await fetchScripts()
+        this.user_scripts = data.user_scripts.children
+        this.backing_scripts = data.backing_scripts.children
       } catch (error) {
         console.error(error)
       }
@@ -293,11 +293,11 @@ export default {
       const path = []
       this.getScriptPath(path, this.scripts, data)
       try {
-        const response = await getScript({ file: path.join('/'), script_type: this.tabName }, data._flag === DOC_STATE_MODIFIED)
+        const res_data = await getScript({ file: path.join('/'), script_type: this.tabName }, data._flag === DOC_STATE_MODIFIED)
         if (data._flag === DOC_STATE_MODIFIED) {
           data._flag = DOC_STATE_NULL
         }
-        this.editor.setValue(response.data)
+        this.editor.setValue(res_data)
         if (this.editor.moveCursorTo) this.editor.moveCursorTo(0, 0)
       } catch (error) {
         console.error(error)
