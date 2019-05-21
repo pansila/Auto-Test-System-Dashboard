@@ -3,12 +3,12 @@
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="left">
 
       <div class="title-container">
-        <h3 class="title">Login Form</h3>
+        <h3 class="title">Login</h3>
       </div>
 
       <el-form-item prop="email">
         <span class="svg-container">
-          <svg-icon icon-class="user" />
+          <svg-icon icon-class="email" />
         </span>
         <el-input
           ref="email"
@@ -47,14 +47,19 @@
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
-      <div style="position:relative">
-        <div class="tips">
-          <a>Register</a>
-        </div>
-        <el-button v-show="false" class="thirdparty-button" type="primary" @click="showDialog=true">
-          Or connect with
-        </el-button>
-      </div>
+      <el-row type="flex" justify="end">
+        <el-col :span="6">
+          <span v-show="false" />
+        </el-col>
+        <el-col :span="6">
+          <el-button v-show="false" class="thirdparty-button" type="primary" @click="showDialog=true">
+            Or connect with
+          </el-button>
+        </el-col>
+        <el-col :span="6">
+          <el-button type="text" style="width: 100%" @click="onRegister">Register</el-button>
+        </el-col>
+      </el-row>
     </el-form>
 
     <el-dialog title="Or connect with" :visible.sync="showDialog">
@@ -91,8 +96,8 @@ export default {
     }
     return {
       loginForm: {
-        email: 'admin@123.com',
-        password: '111111'
+        email: '',
+        password: ''
       },
       loginRules: {
         email: [{ required: true, trigger: 'blur', validator: validateEmail }],
@@ -122,8 +127,8 @@ export default {
     // window.addEventListener('storage', this.afterQRScan)
   },
   mounted() {
-    if (this.loginForm.username === '') {
-      this.$refs.username.focus()
+    if (this.loginForm.email === '') {
+      this.$refs.email.focus()
     } else if (this.loginForm.password === '') {
       this.$refs.password.focus()
     }
@@ -179,6 +184,9 @@ export default {
         }
         return acc
       }, {})
+    },
+    onRegister() {
+      this.$router.push({ path: '/register' })
     }
     // afterQRScan() {
     //   if (e.key === 'x-admin-oauth-code') {

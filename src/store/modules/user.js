@@ -1,4 +1,4 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo, register } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -42,6 +42,14 @@ const actions = {
         reject(error)
       })
     })
+  },
+
+  async register({ commit }, userInfo) {
+    const { email, username, password } = userInfo
+    const response = await register({ email: email.trim(), username: username.trim(), password: password })
+    const { data } = response
+    commit('SET_TOKEN', data.token)
+    setToken(data.token)
   },
 
   // get user info
