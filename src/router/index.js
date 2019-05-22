@@ -163,7 +163,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/test-report/index'),
+        component: () => import('@/views/error-page/404'),
         name: 'test-store',
         meta: { title: 'Test Store', icon: 'example', noCache: true, affix: true }
       }
@@ -175,7 +175,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/test-report/index'),
+        component: () => import('@/views/error-page/404'),
         name: 'users',
         meta: { title: 'Users', icon: 'peoples', noCache: true, affix: true }
       }
@@ -187,7 +187,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/test-report/index'),
+        component: () => import('@/views/error-page/404'),
         name: 'setting',
         meta: { title: 'Setting', icon: 'tab', noCache: true, affix: true }
       }
@@ -199,7 +199,7 @@ export const constantRoutes = [
     children: [
       {
         path: 'index',
-        component: () => import('@/views/test-report/index'),
+        component: () => import('@/views/error-page/404'),
         name: 'help',
         meta: { title: 'Help', icon: 'documentation', noCache: true, affix: true }
       }
