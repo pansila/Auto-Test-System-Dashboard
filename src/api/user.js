@@ -38,3 +38,34 @@ export function register(data) {
     data
   })
 }
+
+export function newOrganization(data) {
+  return request({
+    url: '/organization/',
+    method: 'post',
+    data
+  })
+}
+
+export function fetchOrganizations() {
+  return request({
+    url: '/organization/',
+    method: 'get'
+  })
+}
+
+export function quitOrganization(data) {
+  return request({
+    url: '/organization/member',
+    method: 'delete',
+    data
+  })
+}
+
+export function newTeam(data) {
+  return request({
+    url: '/team/',
+    method: 'post',
+    data
+  })
+}

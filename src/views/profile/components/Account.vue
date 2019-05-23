@@ -6,6 +6,12 @@
     <el-form-item label="Email">
       <el-input v-model.trim="user.email" />
     </el-form-item>
+    <el-form-item label="Introduction">
+      <el-input v-model.trim="user.introduction" />
+    </el-form-item>
+    <el-form-item label="Region">
+      <el-input v-model.trim="user.region" />
+    </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="submit">Update</el-button>
     </el-form-item>
@@ -26,7 +32,7 @@ export default {
     }
   },
   methods: {
-    submit() {
+    async submit() {
       this.$message({
         message: 'User information has been updated successfully',
         type: 'success',

@@ -16,6 +16,18 @@
               <el-tab-pane label="Account" name="account">
                 <account :user="user" />
               </el-tab-pane>
+              <el-tab-pane label="Password" name="password">
+                <password :user="user" />
+              </el-tab-pane>
+              <el-tab-pane label="Avatar" name="avatar">
+                <avatar :user="user" />
+              </el-tab-pane>
+              <el-tab-pane label="Organization" name="organization">
+                <organization :user="user" />
+              </el-tab-pane>
+              <el-tab-pane label="Delete Account" name="delete">
+                <delete :user="user" />
+              </el-tab-pane>
             </el-tabs>
           </el-card>
         </el-col>
@@ -30,10 +42,14 @@ import { mapGetters } from 'vuex'
 import UserCard from './components/UserCard'
 import Timeline from './components/Timeline'
 import Account from './components/Account'
+import Password from './components/Password'
+import Avatar from './components/Avatar'
+import Organization from './components/Organization'
+import Delete from './components/Delete'
 
 export default {
   name: 'Profile',
-  components: { UserCard, Timeline, Account },
+  components: { Avatar, UserCard, Timeline, Account, Password, Organization, Delete },
   data() {
     return {
       user: {},
@@ -46,7 +62,8 @@ export default {
       'avatar',
       'roles',
       'email',
-      'introduction'
+      'introduction',
+      'registered_on'
     ])
   },
   created() {
@@ -59,7 +76,8 @@ export default {
         role: this.roles.join(' | '),
         email: this.email,
         avatar: this.avatar,
-        introduction: this.introduction
+        introduction: this.introduction,
+        registered_on: this.registered_on
       }
     }
   }

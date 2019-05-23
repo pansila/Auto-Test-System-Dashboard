@@ -19,6 +19,14 @@
 
     <div class="user-bio">
       <div class="user-education user-bio-section">
+        <div class="user-bio-section-header"><svg-icon icon-class="email" /><span>{{ user.email }}</span></div>
+      </div>
+
+      <div class="user-education user-bio-section">
+        <div class="user-bio-section-header"><i class="el-icon-time" /><span>{{ 'Joined on ' + new Date(user.registered_on).toLocaleDateString() }}</span></div>
+      </div>
+
+      <div class="user-education user-bio-section">
         <div class="user-bio-section-header"><svg-icon icon-class="education" /><span>Introduction</span></div>
         <div class="user-bio-section-body">
           <div class="text-muted">
@@ -28,23 +36,13 @@
       </div>
 
       <div class="user-skills user-bio-section">
-        <div class="user-bio-section-header"><svg-icon icon-class="skill" /><span>Skills</span></div>
+        <div class="user-bio-section-header"><svg-icon icon-class="skill" /><span>Reputation</span></div>
         <div class="user-bio-section-body">
           <div class="progress-item">
-            <span>Vue</span>
+            <el-row type="flex" justify="center">
+              <el-tag>Test Master</el-tag>
+            </el-row>
             <el-progress :percentage="70" />
-          </div>
-          <div class="progress-item">
-            <span>JavaScript</span>
-            <el-progress :percentage="18" />
-          </div>
-          <div class="progress-item">
-            <span>Css</span>
-            <el-progress :percentage="12" />
-          </div>
-          <div class="progress-item">
-            <span>ESLint</span>
-            <el-progress :percentage="100" status="success" />
           </div>
         </div>
       </div>
@@ -66,7 +64,8 @@ export default {
           email: '',
           avatar: '',
           roles: '',
-          introduction: ''
+          introduction: '',
+          registered_on: ''
         }
       }
     }
@@ -80,61 +79,64 @@ export default {
 </script>
 
 <style lang="scss" scoped>
- .box-center {
-   margin: 0 auto;
-   display: table;
- }
+.box-center {
+  margin: 0 auto;
+  display: table;
+}
 
- .text-muted {
-   color: #777;
- }
+.text-muted {
+  color: #777;
+}
 
- .user-profile {
-   .user-name {
-     font-weight: bold;
-   }
+.user-profile {
+  .user-name {
+    font-weight: bold;
+  }
 
-   .box-center {
-     padding-top: 10px;
-   }
+  .box-center {
+    padding-top: 10px;
+  }
 
-   .user-role {
-     padding-top: 10px;
-     font-weight: 400;
-     font-size: 14px;
-   }
+  .user-role {
+    padding-top: 10px;
+    font-weight: 400;
+    font-size: 14px;
+  }
 
-   .box-social {
-     padding-top: 30px;
+  .box-social {
+    padding-top: 30px;
 
-     .el-table {
-       border-top: 1px solid #dfe6ec;
-     }
-   }
+    .el-table {
+      border-top: 1px solid #dfe6ec;
+    }
+  }
 
-   .user-follow {
-     padding-top: 20px;
-   }
- }
+  .user-follow {
+    padding-top: 20px;
+  }
+}
 
- .user-bio {
-   margin-top: 20px;
-   color: #606266;
+.user-bio {
+  margin-top: 20px;
+  color: #606266;
 
-   span {
-     padding-left: 4px;
-   }
+  span {
+    padding-left: 4px;
+  }
 
-   .user-bio-section {
-     font-size: 14px;
-     padding: 15px 0;
+  .user-bio-section {
+    font-size: 14px;
+    padding-bottom: 15px;
 
-     .user-bio-section-header {
-       border-bottom: 1px solid #dfe6ec;
-       padding-bottom: 10px;
-       margin-bottom: 10px;
-       font-weight: bold;
-     }
-   }
- }
+    .user-bio-section-header {
+      border-bottom: 1px solid #dfe6ec;
+      padding-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .user-bio-section-body {
+      margin-top: 10px;
+    }
+  }
+}
 </style>

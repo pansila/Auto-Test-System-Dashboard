@@ -71,7 +71,12 @@
         </el-upload>
       </el-form-item>
       <el-form-item label="Tester">
-        <el-input v-model="form.tester" />
+        <el-input :value="email" disabled />
+      </el-form-item>
+      <el-form-item label="CC">
+        <el-select v-model="form.cc" placeholder="Others to be notified" multiple>
+          <el-option v-for="u in coworkers" :key="u.email" :label="e.name" :value="e.email" />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="onSubmit">Start</el-button>
@@ -82,6 +87,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { fetchTests, fetchEndpoints, startTest, uploadFiles } from '@/api/testSuite'
 
 export default {
@@ -96,10 +102,12 @@ export default {
       tests: [],
       endpoints: [],
       fileList: [],
+      coworkers: [],
       listLoading: false,
       resource_id: undefined,
       form: {
         tester: '',
+        cc: [],
         priority: '2',
         parallelization: '0',
         test_suite_idx: 0,
@@ -110,6 +118,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([
+      'email'
+    ]),
     test_cases() {
       if (this.tests.length > 0 && this.form.test_suite_idx >= 0) {
         return this.tests[this.form.test_suite_idx].test_cases
@@ -134,8 +145,6 @@ export default {
       }
       return variables
     }
-  },
-  watch: {
   },
   async created() {
     await this.fetchData()
@@ -198,7 +207,8 @@ export default {
         }
       })
       task_data.upload_dir = this.resource_id
-      task_data.tester = this.form.tester
+      task_data.tester = this.email
+      task_data.cc = this.form.cc
 
       try {
         await startTest(task_data)
