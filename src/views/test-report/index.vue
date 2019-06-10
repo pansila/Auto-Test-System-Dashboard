@@ -1,6 +1,13 @@
 <template>
   <div class="page-container">
     <div class="filter-container">
+      <el-cascader
+        v-model="organization_team"
+        class="filter-item"
+        placeholder="Organization / Team"
+        :options="organizations"
+        @change="onOrgTeamChange"
+      />
       <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.priority" placeholder="priority" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in priorityOptions" :key="item.key" :label="item.name" :value="item.key" />
@@ -52,7 +59,7 @@
       </el-table-column>
       <el-table-column label="Run Date" width="195" align="center">
         <template slot-scope="scope">
-          {{ scope.row.run_date.$date | dateFilter }}
+          {{ scope.row.run_date | dateFilter }}
         </template>
       </el-table-column>
       <el-table-column label="Tester" width="180" align="center">
@@ -162,8 +169,8 @@
 
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
-import { fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList } from '@/api/testSuite'
-import { fetchTasks } from '@/api/testSuite'
+import { fetchTasks, fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList } from '@/api/testSuite'
+import { fetchJoinedOrganizationTeams } from '@/api/user'
 import waves from '@/directive/waves' // Waves directive
 
 export default {
@@ -206,6 +213,8 @@ export default {
       dialogFormVisible: false,
       fileList: [],
       resource_id: undefined,
+      organization_team: null,
+      organizations: [],
       form: {
         tester: '',
         parallelization: '0',
@@ -297,15 +306,7 @@ export default {
     }
   },
   async created() {
-    this.listLoading = true
-    await this.fetchTaskList()
-
-    try {
-      this.endpoints = await fetchEndpoints()
-    } catch (error) {
-      console.error(error)
-    }
-    this.listLoading = false
+    this.organizations = await fetchJoinedOrganizationTeams()
   },
   methods: {
     async onSubmit() {
@@ -376,10 +377,12 @@ export default {
       this.resource_id = undefined
     },
     async fetchTaskList() {
-      this.listLoading = true
+      const [organization, team] = this.organization_team
+      this.listQuery.organization = organization
+      this.listQuery.team = team
       try {
         const data = await fetchTasks(this.listQuery)
-        this.tasks = data.items.map(JSON.parse)
+        this.tasks = data.items
         this.tasks.forEach(item => {
           this.$set(item, 'edit', false)
           item.oldComment = item.comment
@@ -388,7 +391,6 @@ export default {
       } catch (error) {
         console.error(error)
       }
-      this.listLoading = false
     },
     async fetchTestList() {
       this.listLoading = true
@@ -506,8 +508,7 @@ export default {
 
       try {
         await this.fetchTestList()
-        const data = await fetchTest(task.test_suite)
-        test = JSON.parse(data)
+        test = await fetchTest(task.test_suite)
         this.listFormLoading = false
       } catch (error) {
         this.listFormLoading = false
@@ -532,12 +533,21 @@ export default {
       this.dialogFormVisible = true
     },
     onTestDetail(row) {
+      const [organization, team] = this.organization_team
       this.$router.push({
         path: 'test-detail',
         query: {
-          task_id: row._id.$oid
+          task_id: row.id,
+          organization,
+          team
         }
       })
+    },
+    async onOrgTeamChange() {
+      await this.fetchTaskList()
+
+      const [organization, team] = this.organization_team
+      this.endpoints = await fetchEndpoints({ organization, team })
     }
   }
 }

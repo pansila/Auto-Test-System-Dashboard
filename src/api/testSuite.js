@@ -65,11 +65,11 @@ export function updateEndpoint(data) {
   })
 }
 
-export function deleteEndpoint(address) {
+export function deleteEndpoint(data) {
   return request({
     url: '/endpoint/',
     method: 'delete',
-    params: { address: address }
+    data
   })
 }
 
@@ -123,10 +123,11 @@ export function cancelTask(task) {
   })
 }
 
-export function fetchScripts() {
+export function fetchScripts(params) {
   return request({
     url: '/script/',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

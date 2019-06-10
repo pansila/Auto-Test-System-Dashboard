@@ -1,6 +1,13 @@
 <template>
   <div class="page-container">
     <div class="filter-container">
+      <el-cascader
+        v-model="organization_team"
+        class="filter-item"
+        placeholder="Organization / Team"
+        :options="organizations"
+        @change="onOrgTeamChange"
+      />
       <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" />
       <el-button v-waves class="filter-item" icon="el-icon-search" @click="handleFilter">{{ 'search' }}</el-button>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-plus" @click="handleAddEndpoint()">Add Endpoint</el-button>
@@ -74,7 +81,9 @@
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import { updateEndpoint, deleteEndpoint, fetchTests, fetchEndpoints } from '@/api/testSuite'
+import { fetchJoinedOrganizationTeams } from '@/api/user'
 import waves from '@/directive/waves' // Waves directive
+import { setTimeout } from 'timers'
 
 export default {
   name: 'TestReport',
@@ -108,6 +117,8 @@ export default {
       listLoading: false,
       listFormLoading: false,
       dialogFormVisible: false,
+      organizations: [],
+      organization_team: null,
       form: {
         endpoint_name: '',
         endpoint_address: '',
@@ -117,13 +128,24 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        title: undefined
+        title: undefined,
+        organization: null,
+        team: null
+      }
+    }
+  },
+  watch: {
+    organization_team(value) {
+      if (value.length >= 1) {
+        this.listQuery.organization = value[0]
+      }
+      if (value.length >= 2) {
+        this.listQuery.team = value[1]
       }
     }
   },
   async created() {
-    await this.fetchEndpointList()
-    await this.fetchTestList()
+    this.organizations = await fetchJoinedOrganizationTeams()
   },
   methods: {
     async fetchEndpointList() {
@@ -150,7 +172,8 @@ export default {
     async onSubmit() {
       this.listFormLoading = true
       try {
-        await updateEndpoint(this.form)
+        const [organization, team] = this.organization_team
+        await updateEndpoint(Object.assign({ organization, team }, this.form))
         await this.fetchEndpointList()
         this.dialogFormVisible = false
       } catch (error) {
@@ -161,8 +184,13 @@ export default {
     async handleRemove(index, row) {
       this.listFormLoading = true
       try {
-        await deleteEndpoint(this.endpoints[index].address)
-        await this.fetchEndpointList()
+        const [organization, team] = this.organization_team
+        await deleteEndpoint({
+          address: this.endpoints[index].address,
+          organization,
+          team
+        })
+        setTimeout(this.fetchEndpointList, 2000)
       } catch (error) {
         console.error(error)
       }
@@ -173,6 +201,14 @@ export default {
       this.fetchEndpointList()
     },
     async handleAddEndpoint(index, row) {
+      if (!this.organization_team) {
+        this.$message({
+          message: 'Please select an organization/team first',
+          type: 'warning'
+        })
+        return
+      }
+      await this.fetchTestList()
       if (index === undefined) {
         this.addEndpoint = true
         this.form.endpoint_name = ''
@@ -180,7 +216,6 @@ export default {
         this.form.enable = false
         this.form.tests = []
       } else {
-        await this.fetchTestList()
         this.addEndpoint = false
         this.form.endpoint_name = this.endpoints[index].name
         this.form.endpoint_address = this.endpoints[index].address
@@ -188,6 +223,9 @@ export default {
         this.form.enable = this.endpoints[index].enable
       }
       this.dialogFormVisible = true
+    },
+    async onOrgTeamChange() {
+      await this.fetchEndpointList()
     }
   }
 }

@@ -7,7 +7,7 @@
       <el-input v-model.trim="user.email" />
     </el-form-item>
     <el-form-item label="Introduction">
-      <el-input v-model.trim="user.introduction" />
+      <el-input v-model="user.introduction" type="textarea" />
     </el-form-item>
     <el-form-item label="Region">
       <el-input v-model.trim="user.region" />

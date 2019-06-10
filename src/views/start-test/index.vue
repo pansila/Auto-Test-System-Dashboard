@@ -2,12 +2,24 @@
   <div class="page-container">
     <el-form ref="form" v-loading="listLoading" :model="form" label-width="120px">
       <el-form-item label="Test Suite">
-        <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run" @change="onTestSuiteChange">
-          <el-option v-for="(t, i) in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="i" />
-        </el-select>
+        <el-row :gutter="10" type="flex">
+          <el-col>
+            <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run" style="width: 100%" @change="onTestSuiteChange">
+              <el-option v-for="(t, i) in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="i" />
+            </el-select>
+          </el-col>
+          <el-col>
+            <el-cascader
+              v-model="organization_team"
+              placeholder="Organization / Team"
+              :options="organizations"
+              @change="onOrgTeamChange"
+            />
+          </el-col>
+        </el-row>
       </el-form-item>
       <el-form-item label="Test Endpoints">
-        <el-select v-model="form.endpoints" placeholder="Please select test endpoints to run" multiple>
+        <el-select v-model="form.endpoints" placeholder="Please select test endpoints to run" multiple style="width: 50%">
           <el-option v-for="e in endpoints" :key="e.address" :label="e.name + ' (' + e.address + ')'" :value="e.address" />
         </el-select>
       </el-form-item>
@@ -25,19 +37,19 @@
         </el-radio-group>
       </el-form-item>
       <el-form-item label="Test Cases">
-        <el-select v-model="form.test_cases" placeholder="Please select test cases to run" multiple @change="onTestCaseChange">
+        <el-select v-model="form.test_cases" placeholder="Please select test cases to run" multiple style="width: 50%" @change="onTestCaseChange">
           <el-option v-for="t in test_cases" :key="t" :label="t | replaceSpace" :value="t" />
         </el-select>
-        <el-checkbox v-model="form.test_cases_all">All Test Cases</el-checkbox>
+        <el-checkbox v-model="form.test_cases_all" style="margin-left: 5px">All Test Cases</el-checkbox>
       </el-form-item>
       <el-form-item label="Variables">
         <el-table :data="variables" border fit style="width: 100%">
-          <el-table-column label="Name" min-width="50px">
+          <el-table-column label="Name" min-width="50px" header-align="center">
             <template slot-scope="scope">
               <span style="margin-left: 10px">{{ scope.row.name }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="Value" min-width="100px">
+          <el-table-column label="Value" min-width="100px" header-align="center">
             <template slot-scope="scope">
               <template v-if="scope.row.edit">
                 <el-input v-model="scope.row.value" class="edit-input" size="small" />
@@ -46,7 +58,7 @@
               <span v-else style="margin-left: 10px">{{ scope.row.value }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="Action">
+          <el-table-column label="Action" align="center">
             <template slot-scope="scope">
               <el-button v-if="scope.row.edit" type="success" size="small" icon="el-icon-circle-check-outline" @click="confirmEdit(scope.row)">OK</el-button>
               <el-button v-else type="primary" size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
@@ -70,11 +82,11 @@
           <el-button size="small" type="primary">Upload</el-button>
         </el-upload>
       </el-form-item>
-      <el-form-item label="Tester">
+      <el-form-item style="width: 50%" label="Tester">
         <el-input :value="email" disabled />
       </el-form-item>
       <el-form-item label="CC">
-        <el-select v-model="form.cc" placeholder="Others to be notified" multiple>
+        <el-select v-model="form.cc" placeholder="Others to notify" multiple style="width: 50%">
           <el-option v-for="u in coworkers" :key="u.email" :label="e.name" :value="e.email" />
         </el-select>
       </el-form-item>
@@ -89,6 +101,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import { fetchTests, fetchEndpoints, startTest, uploadFiles } from '@/api/testSuite'
+import { fetchJoinedOrganizationTeams } from '@/api/user'
 
 export default {
   name: 'StartTest',
@@ -105,12 +118,14 @@ export default {
       coworkers: [],
       listLoading: false,
       resource_id: undefined,
+      organization_team: null,
+      organizations: [],
       form: {
         tester: '',
         cc: [],
         priority: '2',
         parallelization: '0',
-        test_suite_idx: 0,
+        test_suite_idx: null,
         endpoints: [],
         test_cases: [],
         test_cases_all: true
@@ -147,13 +162,11 @@ export default {
     }
   },
   async created() {
-    await this.fetchData()
+    this.organizations = await fetchJoinedOrganizationTeams()
   },
   methods: {
     async onSubmit() {
       /** upload files **/
-      this.listLoading = true
-
       for (const idx in this.fileList) {
         const file = this.fileList[idx]
         const formData = new FormData()
@@ -171,18 +184,17 @@ export default {
               type: 'error'
             })
             this.resource_id = undefined
-            this.listLoading = false
             return
           }
         } catch (error) {
           this.resource_id = undefined
-          this.listLoading = false
           return
         }
       }
 
       /** start the test **/
       const task_data = {}
+      const [organization, team] = this.organization_team
 
       task_data.test_suite = this.tests[this.form.test_suite_idx].test_suite
       task_data.endpoint_list = this.form.endpoints
@@ -209,44 +221,38 @@ export default {
       task_data.upload_dir = this.resource_id
       task_data.tester = this.email
       task_data.cc = this.form.cc
+      task_data.organization = organization
+      task_data.team = team
 
-      try {
-        await startTest(task_data)
-        this.$message({
-          message: 'Schedule the test successfully',
-          type: 'success'
-        })
-      } catch (error) {
-        console.error(error)
-      }
-      this.listLoading = false
+      await startTest(task_data)
+      this.$message({
+        message: 'Schedule the test successfully',
+        type: 'success'
+      })
       this.resource_id = undefined
     },
     async onReset() {
-      this.listLoading = true
       await this.fetchData()
-      this.listLoading = false
     },
     async fetchData() {
-      this.listLoading = true
-      try {
-        this.tests = await fetchTests(this.listQuery)
-      } catch (error) {
-        console.error(error)
+      const [organization, team] = this.organization_team
+      const tests = await fetchTests({ organization, team })
+      if (!tests) {
+        console.error('no tests found')
       }
-
+      this.tests = tests
       this.tests.forEach(test => {
         for (const k in test.variables) {
           test.variables[k] = JSON.stringify(test.variables[k])
         }
       })
-
-      try {
-        this.endpoints = await fetchEndpoints()
-      } catch (error) {
-        console.error(error)
+      if (this.tests.length > 0) {
+        this.form.test_suite_idx = 0
+      } else {
+        this.form.test_suite_idx = null
       }
-      this.listLoading = false
+
+      this.endpoints = await fetchEndpoints({ organization, team })
     },
     onTestSuiteChange(test_suite_idx) {
     },
@@ -288,6 +294,9 @@ export default {
     },
     onUploadFileChange(file, fileList) {
       this.fileList = fileList
+    },
+    async onOrgTeamChange(value) {
+      await this.fetchData()
     }
   }
 }

@@ -47,9 +47,31 @@ export function newOrganization(data) {
   })
 }
 
-export function fetchOrganizations() {
+export function joinOrganization(data) {
+  return request({
+    url: '/organization/join',
+    method: 'post',
+    data
+  })
+}
+
+export function fetchJoinedOrganizations() {
   return request({
     url: '/organization/',
+    method: 'get'
+  })
+}
+
+export function fetchJoinedOrganizationTeams() {
+  return request({
+    url: '/organization/include_team',
+    method: 'get'
+  })
+}
+
+export function fetchAllOrganizations() {
+  return request({
+    url: '/organization/all',
     method: 'get'
   })
 }
@@ -66,6 +88,36 @@ export function newTeam(data) {
   return request({
     url: '/team/',
     method: 'post',
+    data
+  })
+}
+
+export function joinTeam(data) {
+  return request({
+    url: '/team/join',
+    method: 'post',
+    data
+  })
+}
+
+export function fetchJoinedTeams() {
+  return request({
+    url: '/team/',
+    method: 'get'
+  })
+}
+
+export function fetchAllTeams() {
+  return request({
+    url: '/team/all',
+    method: 'get'
+  })
+}
+
+export function quitTeam(data) {
+  return request({
+    url: '/team/member',
+    method: 'delete',
     data
   })
 }

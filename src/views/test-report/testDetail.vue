@@ -84,7 +84,13 @@ export default {
     async fetchData() {
       this.listLoading = true
       try {
-        this.data = await fetchTestDetail(this.$route.query.task_id)
+        this.data = await fetchTestDetail(
+          this.$route.query.task_id,
+          {
+            organization: this.$route.query.organization,
+            team: this.$route.query.team
+          }
+        )
       } catch (error) {
         console.error(error)
       }

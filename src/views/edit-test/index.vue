@@ -3,6 +3,14 @@
     <div class="filter-container">
       <el-row type="flex" justify="start" :gutter="8">
         <el-col style="width: auto;">
+          <el-cascader
+            v-model="organization_team"
+            placeholder="Organization / Team"
+            :options="organizations"
+            @change="onOrgTeamChange"
+          />
+        </el-col>
+        <el-col style="width: auto;">
           <el-button class="filter-item" icon="el-icon-plus" @click="onNewFile">New File</el-button>
         </el-col>
         <el-col style="width: auto;">
@@ -61,6 +69,7 @@ import 'tui-editor/dist/tui-editor-contents.css' // editor content
 import Editor from 'tui-editor'
 import defaultOptions from './defaultOptions'
 import { fetchScripts, getScript, updateScript, removeScript, uploadScripts } from '@/api/testSuite'
+import { fetchJoinedOrganizationTeams } from '@/api/user'
 import { debounce } from '@/utils'
 
 import ace from 'ace-builds/src-noconflict/ace'
@@ -119,11 +128,14 @@ export default {
     return {
       userScriptEditor: null,
       backingScriptEditor: null,
+      organizations: [],
+      organization_team: null,
       user_scripts: null,
       backing_scripts: null,
       tabName: 'user_scripts',
       mouseover: 0,
       currentNode: null,
+      lastNode: null,
       dialogRenameVisible: false,
       lastFile: null,
       fileList: [],
@@ -169,7 +181,7 @@ export default {
     }
   },
   async created() {
-    await this.fetchScriptList()
+    this.organizations = await fetchJoinedOrganizationTeams()
   },
   mounted() {
     this.initEditor()
@@ -179,17 +191,25 @@ export default {
   },
   methods: {
     async fetchScriptList() {
-      try {
-        const data = await fetchScripts()
-        this.user_scripts = data.user_scripts.children
-        this.backing_scripts = data.backing_scripts.children
-      } catch (error) {
-        console.error(error)
+      if (!this.organization_team && !this.organizations) {
+        console.error('selected organization and team are incorrect')
+        return
       }
+      const [organization, team] = this.organization_team
+      const data = await fetchScripts({ organization, team })
+      this.user_scripts = data.user_scripts.children
+      this.backing_scripts = data.backing_scripts.children
     },
     async updateScriptContent(script_type) {
-      if (!this.currentNode) return
-      if (this.currentNode.data._flag !== DOC_STATE_MODIFING) return
+      if (!this.currentNode) {
+        return
+      }
+      if (!this.organization_team) {
+        return
+      }
+      if (this.currentNode.data._flag !== DOC_STATE_MODIFING) {
+        return
+      }
 
       const scripts = (script_type && (script_type === 'user_scripts' ? this.user_scripts : this.backing_scripts)) || this.scripts
       const editor = (script_type && (script_type === 'user_scripts' ? this.userScriptEditor : this.backingScriptEditor)) || this.editor
@@ -197,19 +217,31 @@ export default {
       const path = []
       this.getScriptPath(path, scripts, this.currentNode.data)
 
-      await updateScript({ file: path.join('/'), script_type: script_type || this.tabName, content: editor.getValue() })
+      const [organization, team] = this.organization_team
+
+      await updateScript({
+        file: path.join('/'),
+        script_type: script_type || this.tabName,
+        content: editor.getValue(),
+        organization,
+        team
+      })
       if (this.currentNode) { // current node could have been deleted after returning from udpating script
         this.currentNode.data._flag = DOC_STATE_MODIFIED
       }
     },
     updateScriptContent_limited: debounce(function() { this.updateScriptContent() }, 2000),
     onEditorChange() {
-      if (this.lastFile === this.editor.getValue()) return false
-      if (this.lastFile === null) {
-        this.lastFile = this.editor.getValue()
+      if (!this.currentNode) {
         return
       }
-      if (!this.currentNode) return false
+      if (this.lastFile === this.editor.getValue()) {
+        return
+      }
+      if (this.tabName === 'backing_scripts' && this.lastNode !== this.currentNode) {
+        this.lastNode = this.currentNode
+        return
+      }
       this.currentNode.data._flag = DOC_STATE_MODIFING
 
       this.updateScriptContent_limited()
@@ -221,7 +253,8 @@ export default {
         ...this.editorOptions,
         events: {
           change: this.onEditorChange
-        }
+        },
+        height: '600px'
       })
       if (this.value) {
         this.userScriptEditor.setValue(this.value)
@@ -279,6 +312,8 @@ export default {
       })
     },
     async onClickScript(data, node) {
+      this.lastNode = this.currentNode
+
       if (this.currentNode && this.currentNode.data._flag === DOC_STATE_MODIFING) {
         await this.updateScriptContent()
       }
@@ -292,15 +327,26 @@ export default {
 
       const path = []
       this.getScriptPath(path, this.scripts, data)
-      try {
-        const res_data = await getScript({ file: path.join('/'), script_type: this.tabName }, data._flag === DOC_STATE_MODIFIED)
-        if (data._flag === DOC_STATE_MODIFIED) {
-          data._flag = DOC_STATE_NULL
-        }
-        this.editor.setValue(res_data)
-        if (this.editor.moveCursorTo) this.editor.moveCursorTo(0, 0)
-      } catch (error) {
-        console.error(error)
+
+      const [organization, team] = this.organization_team
+      const no_cache = data._flag === DOC_STATE_MODIFIED || !data._flag
+      const res_data = await getScript(
+        {
+          file: path.join('/'),
+          script_type: this.tabName,
+          organization,
+          team
+        },
+        no_cache)
+      if (no_cache) {
+        data._flag = DOC_STATE_NULL
+      }
+      this.editor.setValue(res_data)
+      if (this.editor.moveCursorTo) this.editor.moveCursorTo(0, 0)
+
+      if (!this.lastFile) {
+        this.lastFile = this.editor.getValue()
+        return
       }
     },
     rename(data) {
@@ -346,12 +392,15 @@ export default {
       children.splice(index, 1)
       this.currentNode = null
 
+      const [organization, team] = this.organization_team
+
       if (data._flag !== DOC_STATE_CREATED) {
-        try {
-          await removeScript({ file: path.join('/'), script_type: this.tabName })
-        } catch (error) {
-          console.error(error)
-        }
+        await removeScript({
+          file: path.join('/'),
+          script_type: this.tabName,
+          organization,
+          team
+        })
       }
 
       const new_data = children[index] || children[index - 1] || parent.data
@@ -398,20 +447,24 @@ export default {
     async onUploadFileChange(file, fileList) {
       this.fileList = fileList
 
+      const [organization, team] = this.organization_team
       this.fileList.forEach(async file => {
         const formData = new FormData()
         formData.append('script_type', this.tabName)
         formData.append('file', file.raw)
-        try {
-          await uploadScripts(formData)
-        } catch (error) {
-          console.error(error)
-          return
-        }
+        formData.append('organization', organization)
+        formData.append('team', team)
+        await uploadScripts(formData)
       })
 
       setTimeout(() => { this.fileList = [] }, 5000)
+      setTimeout(this.fetchScriptList, 1000)
+    },
+    async onOrgTeamChange(value) {
+      await this.updateScriptContent()
       await this.fetchScriptList()
+      this.currentNode = null
+      this.editor.setValue('')
     }
   }
 }

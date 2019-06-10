@@ -13,7 +13,7 @@
       </el-table-column>
       <el-table-column label="Run Date" width="195" align="center">
         <template slot-scope="scope">
-          {{ scope.row.run_date.$date | dateFilter }}
+          {{ scope.row.run_date | dateFilter }}
         </template>
       </el-table-column>
       <el-table-column label="Tester" width="200" align="center">
@@ -74,7 +74,7 @@ export default {
       this.listLoading = true
       const data = await fetchTasks(this.listQuery)
       this.listLoading = false
-      this.list = data.items.map(JSON.parse)
+      this.list = data.items
       this.total = data.total
     }
   }

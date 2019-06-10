@@ -25,6 +25,9 @@
               <el-tab-pane label="Organization" name="organization">
                 <organization :user="user" />
               </el-tab-pane>
+              <el-tab-pane label="Team" name="team">
+                <team :user="user" />
+              </el-tab-pane>
               <el-tab-pane label="Delete Account" name="delete">
                 <delete :user="user" />
               </el-tab-pane>
@@ -45,11 +48,12 @@ import Account from './components/Account'
 import Password from './components/Password'
 import Avatar from './components/Avatar'
 import Organization from './components/Organization'
+import Team from './components/Team'
 import Delete from './components/Delete'
 
 export default {
   name: 'Profile',
-  components: { Avatar, UserCard, Timeline, Account, Password, Organization, Delete },
+  components: { Avatar, UserCard, Timeline, Account, Password, Organization, Team, Delete },
   data() {
     return {
       user: {},
