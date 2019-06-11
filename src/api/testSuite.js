@@ -18,10 +18,26 @@ export function fetchTest(test, query) {
 
 export function fetchTestDetail(test, query) {
   return request({
-    url: '/task/result/' + test,
+    url: '/task/detail/' + test,
     method: 'get',
     responseType: 'text',
     params: query
+  })
+}
+
+export function fetchTestResultFiles(params) {
+  return request({
+    url: '/task/result_files',
+    method: 'get',
+    params
+  })
+}
+
+export function fetchTestResultFile(params) {
+  return request({
+    url: '/task/result_file',
+    method: 'get',
+    params
   })
 }
 

@@ -79,10 +79,11 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="Action" width="220" align="center">
+      <el-table-column label="Action" width="320" align="center">
         <template slot-scope="scope">
           <el-button v-if="scope.row.edit" type="success" size="small" icon="el-icon-circle-check-outline" @click="confirmEdit(scope.row)">OK</el-button>
           <el-button v-else size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
+          <el-button size="small" @click="handleDownload(scope.$index, scope.row)">Download</el-button>
           <el-button type="primary" size="small" @click="handleRetrigger(scope.$index, scope.row)">Retrigger</el-button>
         </template>
       </el-table-column>
@@ -164,14 +165,23 @@
         <el-button type="primary" @click="onSubmit">{{ 'confirm' }}</el-button>
       </div>
     </el-dialog>
+    <el-dialog title="Download" :visible.sync="downloadDialogVisible">
+      <el-card class="box-card" shadow="never">
+        <el-tree :data="test_results || []" :render-content="renderContent" @node-click="onDownloadScript" />
+      </el-card>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="downloadDialogVisible = false">{{ 'Close' }}</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
-import { fetchTasks, fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList } from '@/api/testSuite'
+import { fetchTasks, fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList, fetchTestResultFiles, fetchTestResultFile } from '@/api/testSuite'
 import { fetchJoinedOrganizationTeams } from '@/api/user'
 import waves from '@/directive/waves' // Waves directive
+import fileDownload from 'js-file-download'
 
 export default {
   name: 'TestReport',
@@ -211,6 +221,9 @@ export default {
       priorityOptions: [{ key: 1, name: 'Low' }, { key: 2, name: 'Medium' }, { key: 3, name: 'High' }],
       sortOptions: [{ label: 'Date Ascending', key: '+run_date' }, { label: 'Date Descending', key: '-run_date' }],
       dialogFormVisible: false,
+      downloadDialogVisible: false,
+      test_results: [],
+      currentTask: null,
       fileList: [],
       resource_id: undefined,
       organization_team: null,
@@ -487,6 +500,42 @@ export default {
         console.error(error)
       }
       this.listLoading = false
+    },
+    renderContent(h, { node, data, store }) {
+      return (
+        <span>{node.label}</span>
+      )
+    },
+    getScriptPath(path, tree, node) {
+      return tree.every(e => {
+        if (e.$treeNodeId === node.$treeNodeId) {
+          path.push(e.label)
+          return false
+        }
+        if (e.children) {
+          const ret = this.getScriptPath(path, e.children, node)
+          if (!ret) {
+            path.unshift(e.label)
+          }
+          return ret
+        }
+        return true
+      })
+    },
+    async onDownloadScript(data, node) {
+      const path = []
+      this.getScriptPath(path, this.test_results, data)
+      const [organization, team] = this.organization_team
+      const resp = await fetchTestResultFile({ file: path.join('/'), task_id: this.currentTask.id, organization, team })
+      fileDownload(resp, data.label)
+    },
+    async handleDownload(index, row) {
+      const task = this.tasks[index]
+      const [organization, team] = this.organization_team
+      const resp = await fetchTestResultFiles({ task_id: task.id, organization, team })
+      this.test_results = resp.data.files.children
+      this.currentTask = task
+      this.downloadDialogVisible = true
     },
     async handleRetrigger(index, row) {
       const task = this.tasks[index]
