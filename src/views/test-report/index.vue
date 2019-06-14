@@ -157,7 +157,7 @@
           </el-upload>
         </el-form-item>
         <el-form-item label="Tester">
-          <el-input v-model="form.tester" />
+          <el-input v-model="email" disabled />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -177,6 +177,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import { fetchTasks, fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList, fetchTestResultFiles, fetchTestResultFile } from '@/api/testSuite'
 import { fetchJoinedOrganizationTeams } from '@/api/user'
@@ -285,6 +286,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([
+      'email'
+    ]),
     test_cases() {
       if (this.tests.length > 0 && this.form.test_suite_idx >= 0) {
         return this.tests[this.form.test_suite_idx].test_cases
@@ -413,8 +417,9 @@ export default {
         console.error(error)
       }
 
+      const [organization, team] = this.organization_team
       try {
-        this.endpoints = await fetchEndpoints()
+        this.endpoints = await fetchEndpoints({ organization, team })
       } catch (error) {
         console.error(error)
       }
@@ -539,14 +544,15 @@ export default {
     },
     async handleRetrigger(index, row) {
       const task = this.tasks[index]
+      const [organization, team] = this.organization_team
       let test
 
       this.listFormLoading = true
       this.fileList = []
       try {
-        const fileList = await getTaskResourceList(task._id.$oid)
+        const fileList = await getTaskResourceList({ task_id: task.id, organization, team })
         for (const i in fileList) {
-          this.$set(this.fileList, i, { name: fileList[i], url: process.env.BASE_API + `/taskresource/${task._id.$oid}?file=` + fileList[i] })
+          this.$set(this.fileList, i, { name: fileList[i], url: process.env.BASE_API + `/taskresource/${task.id}?file=` + fileList[i] })
         }
       } catch (error) {
         this.$message({
@@ -557,7 +563,7 @@ export default {
 
       try {
         await this.fetchTestList()
-        test = await fetchTest(task.test_suite)
+        test = await fetchTest(task.test_suite, { organization, team })
         this.listFormLoading = false
       } catch (error) {
         this.listFormLoading = false

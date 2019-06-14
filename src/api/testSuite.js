@@ -16,12 +16,12 @@ export function fetchTest(test, query) {
   })
 }
 
-export function fetchTestDetail(test, query) {
+export function fetchTestDetail(params) {
   return request({
-    url: '/task/detail/' + test,
+    url: '/task/detail',
     method: 'get',
     responseType: 'text',
-    params: query
+    params
   })
 }
 
@@ -116,10 +116,11 @@ export function uploadFiles(data) {
   })
 }
 
-export function getTaskResourceList(data) {
+export function getTaskResourceList(params) {
   return request({
-    url: '/taskresource/list/' + data,
-    method: 'get'
+    url: '/taskresource/list',
+    method: 'get',
+    params
   })
 }
 

@@ -69,10 +69,6 @@ export default {
     this.organizations = await fetchJoinedOrganizationTeams()
   },
   methods: {
-    processTaskList() {
-      addAttrs(this.taskqueues, { expand: true })
-      this.list = treeToArray(this.taskqueues)
-    },
     async fetchQueuingTestList() {
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
@@ -80,6 +76,8 @@ export default {
       this.listLoading = true
       try {
         this.taskqueues = await fetchQueuingTests(this.listQuery)
+        addAttrs(this.taskqueues, { expand: true })
+        this.list = treeToArray(this.taskqueues)
       } catch (error) {
         console.error(error)
       }
@@ -151,7 +149,6 @@ export default {
               this.listLoading = true
               await updateTaskQueue(this.taskqueues)
               await this.fetchQueuingTestList()
-              this.processTaskList()
             } catch (error) {
               console.error(error)
             }
@@ -234,14 +231,12 @@ export default {
       this.$nextTick(async() => {
         cleanParentAttr(this.taskqueues)
         await updateTaskQueue(this.taskqueues)
-        await this.fetchQueuingTestList()
-        this.processTaskList()
+        setTimeout(this.fetchQueuingTestList, 1000)
       })
     },
     async onOrgTeamChange(value) {
       this.organization_team = value
       await this.fetchQueuingTestList()
-      this.processTaskList()
 
       this.$nextTick(() => {
         this.setSort()

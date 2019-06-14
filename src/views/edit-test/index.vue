@@ -343,6 +343,7 @@ export default {
       }
       this.editor.setValue(res_data)
       if (this.editor.moveCursorTo) this.editor.moveCursorTo(0, 0)
+      if (this.editor.moveCursorToStart) this.editor.moveCursorToStart()
 
       if (!this.lastFile) {
         this.lastFile = this.editor.getValue()

@@ -85,8 +85,8 @@ export default {
       this.listLoading = true
       try {
         this.data = await fetchTestDetail(
-          this.$route.query.task_id,
           {
+            task_id: this.$route.query.task_id,
             organization: this.$route.query.organization,
             team: this.$route.query.team
           }
@@ -157,9 +157,7 @@ export default {
       const parent = row.parent
       const show = parent ? parent._expand && parent._show : true
       row._show = show
-      return show
-        ? 'animation:treeTableShow 1s;-webkit-animation:treeTableShow 1s;'
-        : 'display:none;'
+      return show ? 'animation:treeTableShow 1s;-webkit-animation:treeTableShow 1s;' : 'display:none;'
     },
     showSpreadIcon(record) {
       return (record.elements !== undefined)
@@ -232,3 +230,14 @@ export default {
   }
 }
 </script>
+
+<style rel="stylesheet/css">
+  @keyframes treeTableShow {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @-webkit-keyframes treeTableShow {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+</style>
