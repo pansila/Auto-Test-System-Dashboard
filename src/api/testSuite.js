@@ -37,6 +37,7 @@ export function fetchTestResultFile(params) {
   return request({
     url: '/task/result_file',
     method: 'get',
+    responseType: 'blob',
     params
   })
 }

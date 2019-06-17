@@ -528,6 +528,9 @@ export default {
       })
     },
     async onDownloadScript(data, node) {
+      if (data.type === 'directory') {
+        return
+      }
       const path = []
       this.getScriptPath(path, this.test_results, data)
       const [organization, team] = this.organization_team
