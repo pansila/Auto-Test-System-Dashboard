@@ -1,13 +1,6 @@
 <template>
   <div class="page-container">
     <div class="filter-container">
-      <el-cascader
-        v-model="organization_team"
-        class="filter-item"
-        placeholder="Organization / Team"
-        :options="organizations"
-        @change="onOrgTeamChange"
-      />
       <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.priority" placeholder="priority" clearable style="width: 120px" class="filter-item">
         <el-option v-for="item in priorityOptions" :key="item.key" :label="item.name" :value="item.key" />
@@ -180,7 +173,6 @@
 import { mapGetters } from 'vuex'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import { fetchTasks, fetchTest, fetchTests, fetchEndpoints, updateTask, startTest, uploadFiles, getTaskResourceList, fetchTestResultFiles, fetchTestResultFile } from '@/api/testSuite'
-import { fetchJoinedOrganizationTeams } from '@/api/user'
 import waves from '@/directive/waves' // Waves directive
 import fileDownload from 'js-file-download'
 
@@ -227,8 +219,6 @@ export default {
       currentTask: null,
       fileList: [],
       resource_id: undefined,
-      organization_team: null,
-      organizations: [],
       form: {
         tester: '',
         parallelization: '0',
@@ -287,7 +277,8 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'email'
+      'email',
+      'organization_team'
     ]),
     test_cases() {
       if (this.tests.length > 0 && this.form.test_suite_idx >= 0) {
@@ -322,8 +313,19 @@ export default {
       return variables
     }
   },
+  watch: {
+    async organization_team(newVal) {
+      await this.fetchTaskList()
+
+      const [organization, team] = this.organization_team
+      this.endpoints = await fetchEndpoints({ organization, team })
+    }
+  },
   async created() {
-    this.organizations = await fetchJoinedOrganizationTeams()
+    await this.fetchTaskList()
+
+    const [organization, team] = this.organization_team
+    this.endpoints = await fetchEndpoints({ organization, team })
   },
   methods: {
     async onSubmit() {
@@ -600,12 +602,6 @@ export default {
           team
         }
       })
-    },
-    async onOrgTeamChange() {
-      await this.fetchTaskList()
-
-      const [organization, team] = this.organization_team
-      this.endpoints = await fetchEndpoints({ organization, team })
     }
   }
 }

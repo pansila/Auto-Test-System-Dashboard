@@ -160,6 +160,7 @@ export const constantRoutes = [
   {
     path: '/test-store',
     component: Layout,
+    hidden: true,
     children: [
       {
         path: 'index',
@@ -172,6 +173,7 @@ export const constantRoutes = [
   {
     path: '/users',
     component: Layout,
+    hidden: true,
     children: [
       {
         path: 'index',
@@ -184,6 +186,7 @@ export const constantRoutes = [
   {
     path: '/setting',
     component: Layout,
+    hidden: true,
     children: [
       {
         path: 'index',
@@ -196,6 +199,7 @@ export const constantRoutes = [
   {
     path: '/help',
     component: Layout,
+    hidden: true,
     children: [
       {
         path: 'index',

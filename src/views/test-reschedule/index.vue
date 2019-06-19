@@ -1,6 +1,6 @@
 <script>
 import Sortable from 'sortablejs'
-import { fetchJoinedOrganizationTeams } from '@/api/user'
+import { mapGetters } from 'vuex'
 import { fetchQueuingTests, updateTaskQueue, cancelTask } from '@/api/testSuite'
 import { addAttrs, treeToArray, traverseTreeEvery, cleanParentAttr } from './eval'
 
@@ -15,8 +15,6 @@ export default {
         limit: 10,
         title: undefined
       },
-      organizations: [],
-      organization_team: null,
       sortable: null,
       indent: 20,
       taskqueues: [],
@@ -65,14 +63,31 @@ export default {
       ]
     }
   },
+  computed: {
+    ...mapGetters([
+      'organization_team'
+    ])
+  },
+  watch: {
+    async organization_team(newVal) {
+      await this.fetchQueuingTestList()
+      this.$nextTick(() => {
+        this.setSort()
+      })
+    }
+  },
   async created() {
-    this.organizations = await fetchJoinedOrganizationTeams()
+    await this.fetchQueuingTestList()
+    this.$nextTick(() => {
+      this.setSort()
+    })
   },
   methods: {
     async fetchQueuingTestList() {
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
       this.listQuery.team = team
+
       this.listLoading = true
       try {
         this.taskqueues = await fetchQueuingTests(this.listQuery)
@@ -233,24 +248,10 @@ export default {
         await updateTaskQueue(this.taskqueues)
         setTimeout(this.fetchQueuingTestList, 1000)
       })
-    },
-    async onOrgTeamChange(value) {
-      this.organization_team = value
-      await this.fetchQueuingTestList()
-
-      this.$nextTick(() => {
-        this.setSort()
-      })
     }
   },
   render: function(h) {
     return (<div style='margin: 30px'>
-      <el-cascader
-        style='margin-bottom: 10px;'
-        placeholder='Organization / Team'
-        options={this.organizations}
-        onChange={this.onOrgTeamChange}
-      />
       <el-table data={this.list} row-style={this.showRow} row-class-name={this.dragFilter} row-key='_id' border fit style='width: 100%'>
         {this.columns.map(item => {
           return <el-table-column

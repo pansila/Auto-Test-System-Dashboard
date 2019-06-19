@@ -3,14 +3,6 @@
     <div class="filter-container">
       <el-row type="flex" justify="start" :gutter="8">
         <el-col style="width: auto;">
-          <el-cascader
-            v-model="organization_team"
-            placeholder="Organization / Team"
-            :options="organizations"
-            @change="onOrgTeamChange"
-          />
-        </el-col>
-        <el-col style="width: auto;">
           <el-button class="filter-item" icon="el-icon-plus" @click="onNewFile">New File</el-button>
         </el-col>
         <el-col style="width: auto;">
@@ -66,10 +58,10 @@ import 'codemirror/lib/codemirror.css' // codemirror
 import 'tui-editor/dist/tui-editor.css' // editor ui
 import 'tui-editor/dist/tui-editor-contents.css' // editor content
 
+import { mapGetters } from 'vuex'
 import Editor from 'tui-editor'
 import defaultOptions from './defaultOptions'
 import { fetchScripts, getScript, updateScript, removeScript, uploadScripts } from '@/api/testSuite'
-import { fetchJoinedOrganizationTeams } from '@/api/user'
 import { debounce } from '@/utils'
 
 import ace from 'ace-builds/src-noconflict/ace'
@@ -128,8 +120,6 @@ export default {
     return {
       userScriptEditor: null,
       backingScriptEditor: null,
-      organizations: [],
-      organization_team: null,
       user_scripts: null,
       backing_scripts: null,
       tabName: 'user_scripts',
@@ -146,6 +136,9 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([
+      'organization_team'
+    ]),
     editorOptions() {
       const options = Object.assign({}, defaultOptions, this.options)
       options.initialEditType = this.mode
@@ -178,10 +171,17 @@ export default {
     },
     async tabName(newVal, preVal) {
       await this.updateScriptContent(preVal)
+    },
+    async organization_team(newVal) {
+      await this.updateScriptContent()
+      await this.fetchScriptList()
+      this.currentNode = null
+      this.editor.setValue('')
     }
   },
   async created() {
-    this.organizations = await fetchJoinedOrganizationTeams()
+    await this.updateScriptContent()
+    await this.fetchScriptList()
   },
   mounted() {
     this.initEditor()
@@ -460,12 +460,6 @@ export default {
 
       setTimeout(() => { this.fileList = [] }, 5000)
       setTimeout(this.fetchScriptList, 1000)
-    },
-    async onOrgTeamChange(value) {
-      await this.updateScriptContent()
-      await this.fetchScriptList()
-      this.currentNode = null
-      this.editor.setValue('')
     }
   }
 }

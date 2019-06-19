@@ -4,17 +4,9 @@
       <el-form-item label="Test Suite">
         <el-row :gutter="10" type="flex">
           <el-col>
-            <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run" style="width: 100%" @change="onTestSuiteChange">
+            <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run" style="width: 50%" @change="onTestSuiteChange">
               <el-option v-for="(t, i) in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="i" />
             </el-select>
-          </el-col>
-          <el-col>
-            <el-cascader
-              v-model="organization_team"
-              placeholder="Organization / Team"
-              :options="organizations"
-              @change="onOrgTeamChange"
-            />
           </el-col>
         </el-row>
       </el-form-item>
@@ -101,7 +93,6 @@
 <script>
 import { mapGetters } from 'vuex'
 import { fetchTests, fetchEndpoints, startTest, uploadFiles } from '@/api/testSuite'
-import { fetchJoinedOrganizationTeams } from '@/api/user'
 
 export default {
   name: 'StartTest',
@@ -118,8 +109,6 @@ export default {
       coworkers: [],
       listLoading: false,
       resource_id: undefined,
-      organization_team: null,
-      organizations: [],
       form: {
         tester: '',
         cc: [],
@@ -134,7 +123,8 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'email'
+      'email',
+      'organization_team'
     ]),
     test_cases() {
       if (this.tests.length > 0 && this.form.test_suite_idx >= 0) {
@@ -161,8 +151,13 @@ export default {
       return variables
     }
   },
+  watch: {
+    async organization_team(newValue) {
+      await this.fetchData()
+    }
+  },
   async created() {
-    this.organizations = await fetchJoinedOrganizationTeams()
+    await this.fetchData()
   },
   methods: {
     async onSubmit() {
@@ -294,9 +289,6 @@ export default {
     },
     onUploadFileChange(file, fileList) {
       this.fileList = fileList
-    },
-    async onOrgTeamChange(value) {
-      await this.fetchData()
     }
   }
 }

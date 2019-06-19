@@ -1,7 +1,15 @@
 <template>
   <div class="drawer-container">
     <div>
-      <h3 class="drawer-title">Page style setting</h3>
+      <h3 class="drawer-title">Global Setting</h3>
+
+      <div class="drawer-item">
+        <el-cascader
+          v-model="organization_team"
+          placeholder="Organization / Team"
+          :options="organizations"
+        />
+      </div>
 
       <div class="drawer-item">
         <span>Theme Color</span>
@@ -29,11 +37,14 @@
 
 <script>
 import ThemePicker from '@/components/ThemePicker'
+import { fetchJoinedOrganizationTeams } from '@/api/user'
 
 export default {
   components: { ThemePicker },
   data() {
-    return {}
+    return {
+      organizations: []
+    }
   },
   computed: {
     fixedHeader: {
@@ -68,7 +79,21 @@ export default {
           value: val
         })
       }
+    },
+    organization_team: {
+      get() {
+        return this.$store.state.settings.organization_team
+      },
+      set(val) {
+        this.$store.dispatch('settings/changeSetting', {
+          key: 'organization_team',
+          value: val
+        })
+      }
     }
+  },
+  async created() {
+    this.organizations = await fetchJoinedOrganizationTeams()
   },
   methods: {
     themeChange(val) {

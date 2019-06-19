@@ -1,13 +1,6 @@
 <template>
   <div class="page-container">
     <div class="filter-container">
-      <el-cascader
-        v-model="organization_team"
-        class="filter-item"
-        placeholder="Organization / Team"
-        :options="organizations"
-        @change="onOrgTeamChange"
-      />
       <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" />
       <el-button v-waves class="filter-item" icon="el-icon-search" @click="handleFilter">{{ 'search' }}</el-button>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-plus" @click="handleAddEndpoint()">Add Endpoint</el-button>
@@ -79,9 +72,9 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import { updateEndpoint, deleteEndpoint, fetchTests, fetchEndpoints } from '@/api/testSuite'
-import { fetchJoinedOrganizationTeams } from '@/api/user'
 import waves from '@/directive/waves' // Waves directive
 import { setTimeout } from 'timers'
 
@@ -117,8 +110,6 @@ export default {
       listLoading: false,
       listFormLoading: false,
       dialogFormVisible: false,
-      organizations: [],
-      organization_team: null,
       form: {
         endpoint_name: '',
         endpoint_address: '',
@@ -134,21 +125,25 @@ export default {
       }
     }
   },
+  computed: {
+    ...mapGetters([
+      'organization_team'
+    ])
+  },
   watch: {
-    organization_team(value) {
-      if (value.length >= 1) {
-        this.listQuery.organization = value[0]
-      }
-      if (value.length >= 2) {
-        this.listQuery.team = value[1]
-      }
+    async organization_team(value) {
+      await this.fetchEndpointList()
     }
   },
   async created() {
-    this.organizations = await fetchJoinedOrganizationTeams()
+    await this.fetchEndpointList()
   },
   methods: {
     async fetchEndpointList() {
+      const [organization, team] = this.organization_team
+      this.listQuery.organization = organization
+      this.listQuery.team = team
+
       this.listLoading = true
       try {
         this.endpoints = await fetchEndpoints(this.listQuery)
@@ -223,9 +218,6 @@ export default {
         this.form.enable = this.endpoints[index].enable
       }
       this.dialogFormVisible = true
-    },
-    async onOrgTeamChange() {
-      await this.fetchEndpointList()
     }
   }
 }
