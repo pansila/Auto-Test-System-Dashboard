@@ -39,6 +39,38 @@ export function register(data) {
   })
 }
 
+export function updateAccount(user) {
+  return request({
+    url: '/user/account',
+    method: 'post',
+    data: user
+  })
+}
+
+export function deleteAccount(data) {
+  return request({
+    url: '/user/account',
+    method: 'delete',
+    data
+  })
+}
+
+export function updatePassword(data) {
+  return request({
+    url: '/user/password',
+    method: 'post',
+    data
+  })
+}
+
+export function useAvatar(data) {
+  return request({
+    url: '/user/avatar',
+    method: 'patch',
+    data
+  })
+}
+
 export function newOrganization(data) {
   return request({
     url: '/organization/',
@@ -80,6 +112,22 @@ export function quitOrganization(data) {
   return request({
     url: '/organization/member',
     method: 'delete',
+    data
+  })
+}
+
+export function fetchOrganizationUsers(params) {
+  return request({
+    url: '/organization/users',
+    method: 'get',
+    params
+  })
+}
+
+export function transferOwnership(data) {
+  return request({
+    url: '/organization/transfer',
+    method: 'post',
     data
   })
 }

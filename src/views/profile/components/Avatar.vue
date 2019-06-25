@@ -3,16 +3,17 @@
     <el-form-item>
       <el-radio v-model="radio" label="0">Avatar Generated From Email</el-radio>
       <el-row type="flex" justify="left" class="radio-indent">
-        <el-input v-model="user.email" style="width: 50%" />
+        <el-input v-model="user.email" style="width: 50%" disabled />
       </el-row>
     </el-form-item>
     <el-form-item>
       <el-radio v-model="radio" label="1">Custom Avatar</el-radio>
       <el-upload
         class="avatar-uploader radio-indent"
-        action="https://jsonplaceholder.typicode.com/posts/"
-        :show-file-list="false"
+        :action="avatar_url"
+        :headers="tokenHeader"
         :on-success="handleAvatarSuccess"
+        :show-file-list="false"
         :before-upload="beforeAvatarUpload"
       >
         <img v-if="imageUrl" :src="imageUrl" class="avatar">
@@ -26,6 +27,9 @@
 </template>
 
 <script>
+import { useAvatar } from '@/api/user'
+import { getToken } from '@/utils/auth'
+
 export default {
   props: {
     user: {
@@ -40,13 +44,32 @@ export default {
   data() {
     return {
       radio: '0',
-      imageUrl: ''
+      imageUrl: '',
+      avatar_url: process.env.VUE_APP_BASE_API + '/user/avatar',
+      tokenHeader: {
+        'X-Token': getToken()
+      }
     }
   },
   methods: {
     async submit() {
+      if (this.radio === '1') {
+        try {
+          await useAvatar({ type: 'custom' })
+        } catch (error) {
+          console.error(error)
+          return
+        }
+      } else {
+        try {
+          await useAvatar({ type: 'default' })
+        } catch (error) {
+          console.error(error)
+          return
+        }
+      }
       this.$message({
-        message: 'Password has been updated successfully',
+        message: 'Avatar has been updated successfully',
         type: 'success',
         duration: 5 * 1000
       })
@@ -55,16 +78,16 @@ export default {
       this.imageUrl = URL.createObjectURL(file.raw)
     },
     beforeAvatarUpload(file) {
-      const isJPG = file.type === 'image/jpeg'
+      const isAllowed = file.type === 'image/jpeg' || file.type === 'image/png'
       const isLt2M = file.size / 1024 / 1024 < 2
 
-      if (!isJPG) {
-        this.$message.error('上传头像图片只能是 JPG 格式!')
+      if (!isAllowed) {
+        this.$message.error('Avatar format should be JPG or PNG')
       }
       if (!isLt2M) {
-        this.$message.error('上传头像图片大小不能超过 2MB!')
+        this.$message.error('Avatar size should be less than 2MB')
       }
-      return isJPG && isLt2M
+      return isAllowed && isLt2M
     }
   }
 }

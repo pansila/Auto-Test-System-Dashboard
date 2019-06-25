@@ -67,7 +67,8 @@ export default {
       'roles',
       'email',
       'introduction',
-      'registered_on'
+      'registered_on',
+      'region'
     ])
   },
   created() {
@@ -81,7 +82,8 @@ export default {
         email: this.email,
         avatar: this.avatar,
         introduction: this.introduction,
-        registered_on: this.registered_on
+        registered_on: this.registered_on,
+        region: this.region
       }
     }
   }
