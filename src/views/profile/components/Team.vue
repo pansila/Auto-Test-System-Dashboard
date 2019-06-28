@@ -1,6 +1,6 @@
 <template>
   <div>
-    <span v-if="organizations == false || organizations.length === 0">Please join an organization first</span>
+    <span v-if="!joined_organizations || joined_organizations.length === 0">Please join an organization first</span>
     <el-card v-else class="box-card">
       <div slot="header" class="clearfix">
         <span>Teams Joined</span>
@@ -8,7 +8,7 @@
         <el-button style="float: right; margin-right: 5px;" type="primary" plain size="medium" @click="onNewTeam">New Team</el-button>
         <el-select v-model="organization" placeholder="Please choose a organization" style="float: right; margin-right: 5px;">
           <el-option
-            v-for="org in organizations"
+            v-for="org in owned_organizations"
             :key="org.label"
             :label="org.label"
             :value="org.value"
@@ -41,7 +41,8 @@
         </el-table-column>
         <el-table-column label="Action" width="220">
           <template slot-scope="scope">
-            <el-button type="danger" plain size="small" @click="onQuit(scope.$index, scope.row)">Quit</el-button>
+            <el-button v-if="scope.row.owner_email === user.email" type="danger" plain size="small" @click="onTeamDelete(scope.$index, scope.row)">Delete</el-button>
+            <el-button v-else type="danger" plain size="small" @click="onQuit(scope.$index, scope.row)">Quit</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -79,15 +80,26 @@
 </template>
 
 <script>
-import { newTeam, joinTeam, fetchJoinedTeams, fetchAllTeams, quitTeam, fetchJoinedOrganizations } from '@/api/user'
+import { mapGetters } from 'vuex'
+import { newTeam, joinTeam, fetchJoinedTeams, fetchAllTeams, quitTeam, deleteTeam, fetchJoinedOrganizations, fetchJoinedOrganizationTeams } from '@/api/user'
 
 export default {
+  props: {
+    user: {
+      type: Object,
+      default: () => {
+        return {
+          email: ''
+        }
+      }
+    }
+  },
   data() {
     return {
       dialogNewTeamVisible: false,
       dialogJoinTeamVisible: false,
       listLoading: false,
-      organizations: [],
+      joined_organizations: [],
       organization: null,
       joined_teams: [],
       all_teams: [],
@@ -99,12 +111,31 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([
+      'email'
+    ]),
     teams() {
       return this.joined_teams.filter(team => {
         if (team.organization_id === this.organization) {
           return true
         }
         return false
+      })
+    },
+    organizations: {
+      get() {
+        return this.$store.state.settings.organizations
+      },
+      set(val) {
+        this.$store.dispatch('settings/changeSetting', {
+          key: 'organizations',
+          value: val
+        })
+      }
+    },
+    owned_organizations() {
+      return this.joined_organizations.filter(org => {
+        return org.owner_email === this.email
       })
     }
   },
@@ -113,9 +144,10 @@ export default {
   },
   methods: {
     async getTeams() {
-      this.organizations = await fetchJoinedOrganizations()
+      this.joined_organizations = await fetchJoinedOrganizations()
       this.joined_teams = await fetchJoinedTeams()
       this.all_teams = await fetchAllTeams()
+      this.organizations = await fetchJoinedOrganizationTeams()
     },
     async onNewTeamSubmit() {
       try {
@@ -172,14 +204,29 @@ export default {
     async onQuit(idx, row) {
       try {
         await quitTeam({ 'team_id': this.teams[idx].value })
-        this.$message({
-          message: 'Quit the team successfully',
-          type: 'success',
-          duration: 5 * 1000
-        })
       } catch (error) {
         console.error(error)
+        return
       }
+      this.$message({
+        message: 'Quit the team successfully',
+        type: 'success',
+        duration: 5 * 1000
+      })
+      await this.getTeams()
+    },
+    async onTeamDelete(idx, row) {
+      try {
+        await deleteTeam({ 'team_id': this.teams[idx].value })
+      } catch (error) {
+        console.error(error)
+        return
+      }
+      this.$message({
+        message: 'Delete the team successfully',
+        type: 'success',
+        duration: 5 * 1000
+      })
       await this.getTeams()
     }
   }

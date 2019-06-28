@@ -9,7 +9,8 @@ const state = {
   tagsView: tagsView,
   fixedHeader: fixedHeader,
   sidebarLogo: sidebarLogo,
-  organization_team: null
+  organization_team: null,
+  organizations: []
 }
 
 const mutations = {

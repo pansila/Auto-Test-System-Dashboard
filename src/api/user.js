@@ -116,6 +116,14 @@ export function quitOrganization(data) {
   })
 }
 
+export function deleteOrganization(data) {
+  return request({
+    url: '/organization/',
+    method: 'delete',
+    data
+  })
+}
+
 export function fetchOrganizationUsers(params) {
   return request({
     url: '/organization/users',
@@ -165,6 +173,14 @@ export function fetchAllTeams() {
 export function quitTeam(data) {
   return request({
     url: '/team/member',
+    method: 'delete',
+    data
+  })
+}
+
+export function deleteTeam(data) {
+  return request({
+    url: '/team/',
     method: 'delete',
     data
   })

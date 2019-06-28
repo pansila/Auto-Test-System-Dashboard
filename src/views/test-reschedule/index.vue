@@ -162,7 +162,8 @@ export default {
             cleanParentAttr(this.taskqueues)
             try {
               this.listLoading = true
-              await updateTaskQueue(this.taskqueues)
+              const [organization, team] = this.organization_team
+              await updateTaskQueue({ organization, team, taskqueues: this.taskqueues })
               await this.fetchQueuingTestList()
             } catch (error) {
               console.error(error)
@@ -213,6 +214,7 @@ export default {
       record._expand = expand
     },
     async onTaskCancel(task) {
+      const [organization, team] = this.organization_team
       await this.$confirm('Confirm to the task?', 'Warning', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
@@ -245,7 +247,7 @@ export default {
       this.list = []
       this.$nextTick(async() => {
         cleanParentAttr(this.taskqueues)
-        await updateTaskQueue(this.taskqueues)
+        await updateTaskQueue({ organization, team, taskqueues: this.taskqueues })
         setTimeout(this.fetchQueuingTestList, 1000)
       })
     }

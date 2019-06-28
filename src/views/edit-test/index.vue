@@ -289,7 +289,7 @@ export default {
           <span>{node.label}</span>
           <span v-show={this.mouseover === data.$treeNodeId}>
             <el-button size='mini' type='text' on-click={ () => this.rename(data) }>Rename</el-button>
-            <el-button size='mini' type='text' on-click={ () => this.append(data) }>Append</el-button>
+            <el-button v-show={data.type !== 'file'} size='mini' type='text' on-click={ () => this.append(data) }>Append</el-button>
             <el-button size='mini' type='text' on-click={ (e) => { this.remove(node, data); e.stopPropagation() }}>Delete</el-button>
           </span>
         </span>
@@ -363,6 +363,7 @@ export default {
       this.dialogRenameVisible = false
     },
     append(data) {
+      if (data.type === 'file') return
       const newChild = { _flag: DOC_STATE_CREATED, type: 'file', label: this.tabName === 'user_scripts' ? 'New File.md' : 'New File.py', children: [] }
       if (!data.children) {
         this.$set(data, 'children', [])

@@ -8,7 +8,7 @@
       </div>
       <el-table
         v-loading="listLoading"
-        :data="organizations"
+        :data="joined_organizations"
         row-key="value"
         fit
         style="width: 100%"
@@ -32,7 +32,8 @@
         </el-table-column>
         <el-table-column label="Action" width="220">
           <template slot-scope="scope">
-            <el-button type="danger" plain size="small" @click="onQuit(scope.$index, scope.row)">Quit</el-button>
+            <el-button v-if="scope.row.owner_email === user.email" type="danger" plain size="small" @click="onDelete(scope.$index, scope.row)">Delete</el-button>
+            <el-button v-else type="danger" plain size="small" @click="onQuit(scope.$index, scope.row)">Quit</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -70,15 +71,25 @@
 </template>
 
 <script>
-import { newOrganization, joinOrganization, fetchJoinedOrganizations, fetchAllOrganizations, quitOrganization } from '@/api/user'
+import { newOrganization, joinOrganization, fetchJoinedOrganizations, fetchJoinedOrganizationTeams, fetchAllOrganizations, quitOrganization, deleteOrganization } from '@/api/user'
 
 export default {
+  props: {
+    user: {
+      type: Object,
+      default: () => {
+        return {
+          email: ''
+        }
+      }
+    }
+  },
   data() {
     return {
       dialogNewOrgVisible: false,
       dialogJoinOrgVisible: false,
       listLoading: false,
-      organizations: [],
+      joined_organizations: [],
       all_organizations: [],
       org_name: '',
       org_join: null,
@@ -87,13 +98,27 @@ export default {
       }
     }
   },
+  computed: {
+    organizations: {
+      get() {
+        return this.$store.state.settings.organizations
+      },
+      set(val) {
+        this.$store.dispatch('settings/changeSetting', {
+          key: 'organizations',
+          value: val
+        })
+      }
+    }
+  },
   async created() {
     await this.getOrganizations()
   },
   methods: {
     async getOrganizations() {
-      this.organizations = await fetchJoinedOrganizations()
+      this.joined_organizations = await fetchJoinedOrganizations()
       this.all_organizations = await fetchAllOrganizations()
+      this.organizations = await fetchJoinedOrganizationTeams()
     },
     async onNewOrgSubmit() {
       try {
@@ -135,15 +160,30 @@ export default {
     },
     async onQuit(idx, row) {
       try {
-        await quitOrganization({ 'organization_id': this.organizations[idx].value })
-        this.$message({
-          message: 'Quit the organization successfully',
-          type: 'success',
-          duration: 5 * 1000
-        })
+        await quitOrganization({ 'organization_id': this.joined_organizations[idx].value })
       } catch (error) {
         console.error(error)
+        return
       }
+      this.$message({
+        message: 'Quit the organization successfully',
+        type: 'success',
+        duration: 5 * 1000
+      })
+      await this.getOrganizations()
+    },
+    async onDelete(idx, row) {
+      try {
+        await deleteOrganization({ 'organization_id': this.joined_organizations[idx].value })
+      } catch (error) {
+        console.error(error)
+        return
+      }
+      this.$message({
+        message: 'Delete the organization successfully',
+        type: 'success',
+        duration: 5 * 1000
+      })
       await this.getOrganizations()
     }
   }

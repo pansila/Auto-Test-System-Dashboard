@@ -8,6 +8,7 @@
           v-model="organization_team"
           placeholder="Organization / Team"
           :options="organizations"
+          change-on-select
         />
       </div>
 
@@ -41,11 +42,6 @@ import { fetchJoinedOrganizationTeams } from '@/api/user'
 
 export default {
   components: { ThemePicker },
-  data() {
-    return {
-      organizations: []
-    }
-  },
   computed: {
     fixedHeader: {
       get() {
@@ -76,6 +72,17 @@ export default {
       set(val) {
         this.$store.dispatch('settings/changeSetting', {
           key: 'sidebarLogo',
+          value: val
+        })
+      }
+    },
+    organizations: {
+      get() {
+        return this.$store.state.settings.organizations
+      },
+      set(val) {
+        this.$store.dispatch('settings/changeSetting', {
+          key: 'organizations',
           value: val
         })
       }

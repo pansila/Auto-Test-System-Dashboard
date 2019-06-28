@@ -48,6 +48,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import CountTo from 'vue-count-to'
 import { fetchTaskList } from '@/api/testSuite'
 
@@ -62,20 +63,33 @@ export default {
       failed: 0,
       running: 0,
       waiting: 0,
-      listQuery: {
-        start_date: Date.now() - 604800000,
-        end_date: Date.now()
-      }
+      listQuery: {}
     }
   },
-  created() {
-    this.fetchData()
+  computed: {
+    ...mapGetters([
+      'organization_team'
+    ])
+  },
+  watch: {
+    async organization_team(newVal) {
+      await this.fetchData()
+    }
+  },
+  async created() {
+    await this.fetchData()
   },
   methods: {
     handleSetLineChartData(type) {
       this.$emit('handleSetLineChartData', type)
     },
     async fetchData() {
+      if (!this.organization_team) return
+      const [organization, team] = this.organization_team
+      this.listQuery.start_date = Date.now() - 604800000
+      this.listQuery.end_date = Date.now()
+      this.listQuery.organization = organization
+      this.listQuery.team = team
       const items = await fetchTaskList(this.listQuery)
       let finished = 0
       let failed = 0
