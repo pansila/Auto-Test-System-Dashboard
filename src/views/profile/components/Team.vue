@@ -8,7 +8,7 @@
         <el-button style="float: right; margin-right: 5px;" type="primary" plain size="medium" @click="onNewTeam">New Team</el-button>
         <el-select v-model="organization" placeholder="Please choose a organization" style="float: right; margin-right: 5px;">
           <el-option
-            v-for="org in owned_organizations"
+            v-for="org in joined_organizations"
             :key="org.label"
             :label="org.label"
             :value="org.value"
@@ -85,6 +85,10 @@ import { newTeam, joinTeam, fetchJoinedTeams, fetchAllTeams, quitTeam, deleteTea
 
 export default {
   props: {
+    eventHub: {
+      type: Object,
+      required: true
+    },
     user: {
       type: Object,
       default: () => {
@@ -132,15 +136,19 @@ export default {
           value: val
         })
       }
-    },
-    owned_organizations() {
-      return this.joined_organizations.filter(org => {
-        return org.owner_email === this.email
-      })
     }
   },
   async created() {
     await this.getTeams()
+    this.eventHub.$on('ORGANIZATION_LEAVE', async(organization_id) => {
+      if (organization_id === this.organization) {
+        this.organization = null
+      }
+      await this.getTeams()
+    })
+    this.eventHub.$on('ORGANIZATION_ENTER', async() => {
+      await this.getTeams()
+    })
   },
   methods: {
     async getTeams() {
@@ -184,6 +192,16 @@ export default {
           type: 'warning'
         })
         return
+      }
+      for (const i in this.joined_organizations) {
+        if (this.joined_organizations[i].value === this.organization &&
+            this.joined_organizations[i].owner_email !== this.email) {
+          this.$message({
+            message: 'Your are not the organization owner',
+            type: 'warning'
+          })
+          return
+        }
       }
       this.dialogNewTeamVisible = true
     },

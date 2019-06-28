@@ -23,10 +23,10 @@
                 <avatar :user="user" />
               </el-tab-pane>
               <el-tab-pane label="Organization" name="organization">
-                <organization :user="user" />
+                <organization :user="user" :event-hub="organization_team_bus" />
               </el-tab-pane>
               <el-tab-pane label="Team" name="team">
-                <team :user="user" />
+                <team :user="user" :event-hub="organization_team_bus" />
               </el-tab-pane>
               <el-tab-pane label="Delete Account" name="delete">
                 <delete :user="user" />
@@ -50,6 +50,7 @@ import Avatar from './components/Avatar'
 import Organization from './components/Organization'
 import Team from './components/Team'
 import Delete from './components/Delete'
+import Vue from 'vue'
 
 export default {
   name: 'Profile',
@@ -57,7 +58,8 @@ export default {
   data() {
     return {
       user: {},
-      activeTab: 'timeline'
+      activeTab: 'timeline',
+      organization_team_bus: new Vue()
     }
   },
   computed: {

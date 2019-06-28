@@ -75,6 +75,10 @@ import { newOrganization, joinOrganization, fetchJoinedOrganizations, fetchJoine
 
 export default {
   props: {
+    eventHub: {
+      type: Object,
+      required: true
+    },
     user: {
       type: Object,
       default: () => {
@@ -99,6 +103,17 @@ export default {
     }
   },
   computed: {
+    organization_team: {
+      get() {
+        return this.$store.state.settings.organization_team
+      },
+      set(val) {
+        this.$store.dispatch('settings/changeSetting', {
+          key: 'organization_team',
+          value: val
+        })
+      }
+    },
     organizations: {
       get() {
         return this.$store.state.settings.organizations
@@ -133,6 +148,7 @@ export default {
       }
       await this.getOrganizations()
       this.dialogNewOrgVisible = false
+      this.eventHub.$emit('ORGANIZATION_ENTER')
     },
     async onJoinOrgSubmit() {
       try {
@@ -147,6 +163,7 @@ export default {
       }
       await this.getOrganizations()
       this.dialogJoinOrgVisible = false
+      this.eventHub.$emit('ORGANIZATION_ENTER')
     },
     onNewOrganization() {
       this.dialogNewOrgVisible = true
@@ -159,8 +176,9 @@ export default {
     onUser() {
     },
     async onQuit(idx, row) {
+      const organization_id = row.value
       try {
-        await quitOrganization({ 'organization_id': this.joined_organizations[idx].value })
+        await quitOrganization({ 'organization_id': organization_id })
       } catch (error) {
         console.error(error)
         return
@@ -170,11 +188,20 @@ export default {
         type: 'success',
         duration: 5 * 1000
       })
+
+      if (this.organization_team) {
+        const [organization] = this.organization_team
+        if (organization === organization_id) {
+          this.organization_team = null
+        }
+      }
       await this.getOrganizations()
+      this.eventHub.$emit('ORGANIZATION_LEAVE', organization_id)
     },
     async onDelete(idx, row) {
+      const organization_id = row.value
       try {
-        await deleteOrganization({ 'organization_id': this.joined_organizations[idx].value })
+        await deleteOrganization({ 'organization_id': organization_id })
       } catch (error) {
         console.error(error)
         return
@@ -184,7 +211,15 @@ export default {
         type: 'success',
         duration: 5 * 1000
       })
+
+      if (this.organization_team) {
+        const [organization] = this.organization_team
+        if (organization === organization_id) {
+          this.organization_team = null
+        }
+      }
       await this.getOrganizations()
+      this.eventHub.$emit('ORGANIZATION_LEAVE', organization_id)
     }
   }
 }
