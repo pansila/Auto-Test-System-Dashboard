@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import echarts from 'echarts'
 require('echarts/theme/macarons') // echarts theme
 import resize from './mixins/resize'
@@ -36,6 +37,17 @@ export default {
         start_date: Date.now() - 604800000,
         end_date: Date.now()
       }
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'organization_team'
+    ])
+  },
+  watch: {
+    async organization_team(newVal) {
+      if (!newVal) return
+      await this.fetchData()
     }
   },
   mounted() {
@@ -91,6 +103,10 @@ export default {
       })
     },
     async fetchData() {
+      if (!this.organization_team) return
+      const [organization, team] = this.organization_team
+      this.listQuery.organization = organization
+      this.listQuery.team = team
       const items = await fetchTaskList(this.listQuery)
       let succeeded = 0
       let failed = 0

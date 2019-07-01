@@ -235,6 +235,8 @@ export default {
       }
 
       try {
+        task.organization = organization
+        task.team = team
         await cancelTask(task)
         this.$message({
           type: 'success',

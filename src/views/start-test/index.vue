@@ -162,26 +162,24 @@ export default {
   methods: {
     async onSubmit() {
       /** upload files **/
+      const [organization, team] = this.organization_team
       for (const idx in this.fileList) {
         const file = this.fileList[idx]
         const formData = new FormData()
+        formData.append('organization', organization)
+        formData.append('team', team)
         formData.append('file', file.raw)
         if (this.resource_id) {
           formData.append('resource_id', this.resource_id)
         }
         try {
-          const data = await uploadFiles(formData)
-          if (data.status === 0) {
-            this.resource_id = data.data
-          } else {
-            this.$message({
-              message: `Failed to upload files, status: ${data.status}`,
-              type: 'error'
-            })
-            this.resource_id = undefined
-            return
-          }
+          const resp = await uploadFiles(formData)
+          this.resource_id = resp.data.resource_id
         } catch (error) {
+          this.$message({
+            message: 'Failed to upload files',
+            type: 'error'
+          })
           this.resource_id = undefined
           return
         }
@@ -189,7 +187,6 @@ export default {
 
       /** start the test **/
       const task_data = {}
-      const [organization, team] = this.organization_team
 
       task_data.test_suite = this.tests[this.form.test_suite_idx].test_suite
       task_data.endpoint_list = this.form.endpoints

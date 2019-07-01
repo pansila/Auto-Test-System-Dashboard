@@ -206,6 +206,7 @@ export default {
     return {
       tests: [],
       tasks: [],
+      retrigger_task: null,
       endpoints: [],
       variables_retrigger: [],
       total: 0,
@@ -332,37 +333,37 @@ export default {
       /** upload files **/
       this.listFormLoading = true
 
-      const formData = new FormData()
-      if (this.resource_id) {
-        formData.append('resource_id', this.resource_id)
-      }
-      for (const idx in this.fileList) {
-        const file = this.fileList[idx]
-        if (file.url) {
-          formData.append('file', file.url)
-        } else {
-          formData.append('file', file.raw)
+      const [organization, team] = this.organization_team
+      if (this.fileList.length > 0) {
+        const formData = new FormData()
+        formData.append('organization', organization)
+        formData.append('team', team)
+        formData.append('retrigger_task', this.retrigger_task.id)
+        if (this.resource_id) {
+          formData.append('resource_id', this.resource_id)
         }
-      }
-      try {
-        const data = await uploadFiles(formData)
-        if (data.status === 0) {
-          this.resource_id = data.data
-        } else {
+        for (const idx in this.fileList) {
+          const file = this.fileList[idx]
+          if (file.url) {
+            formData.append('file', file.url)
+          } else {
+            formData.append('file', file.raw)
+          }
+        }
+        try {
+          const resp = await uploadFiles(formData)
+          this.resource_id = resp.data.resource_id
+        } catch (error) {
           this.$message({
-            message: `Failed to upload files, status: ${data.status}`,
+            message: 'Failed to upload files',
             type: 'error'
           })
           this.resource_id = undefined
           this.listFormLoading = false
           return
         }
-      } catch (error) {
-        this.resource_id = undefined
         this.listFormLoading = false
-        return
       }
-      this.listFormLoading = false
 
       /** start the test **/
       const task_data = {}
@@ -385,9 +386,16 @@ export default {
       }
       task_data.upload_dir = this.resource_id
       task_data.tester = this.form.tester
+      task_data.cc = this.form.cc
+      task_data.organization = organization
+      task_data.team = team
 
       try {
         await startTest(task_data)
+        this.$message({
+          message: 'Schedule the test successfully',
+          type: 'success'
+        })
         this.listFormLoading = false
         this.dialogFormVisible = false
       } catch (error) {
@@ -413,13 +421,15 @@ export default {
     },
     async fetchTestList() {
       this.listLoading = true
+      const [organization, team] = this.organization_team
+      this.listQuery.organization = organization
+      this.listQuery.team = team
       try {
         this.tests = await fetchTests(this.listQuery)
       } catch (error) {
         console.error(error)
       }
 
-      const [organization, team] = this.organization_team
       try {
         this.endpoints = await fetchEndpoints({ organization, team })
       } catch (error) {
@@ -502,6 +512,10 @@ export default {
 
       this.listLoading = true
       try {
+        const [organization, team] = this.organization_team
+        row.organization = organization
+        row.team = team
+        row.task_id = row.id
         await updateTask(row)
       } catch (error) {
         console.error(error)
@@ -548,27 +562,27 @@ export default {
       this.downloadDialogVisible = true
     },
     async handleRetrigger(index, row) {
-      const task = this.tasks[index]
+      this.retrigger_task = this.tasks[index]
       const [organization, team] = this.organization_team
       let test
 
       this.listFormLoading = true
       this.fileList = []
       try {
-        const fileList = await getTaskResourceList({ task_id: task.id, organization, team })
+        const fileList = await getTaskResourceList({ task_id: this.retrigger_task.id, organization, team })
         for (const i in fileList) {
-          this.$set(this.fileList, i, { name: fileList[i], url: process.env.BASE_API + `/taskresource/${task.id}?file=` + fileList[i] })
+          this.$set(this.fileList, i, { name: fileList[i], url: fileList[i] })
         }
       } catch (error) {
         this.$message({
-          message: 'Resource files have been deleted',
-          type: 'error'
+          message: 'Resource files not found, please upload new ones',
+          type: 'warning'
         })
       }
 
       try {
         await this.fetchTestList()
-        test = await fetchTest(task.test_suite, { organization, team })
+        test = await fetchTest(this.retrigger_task.test_suite, { organization, team })
         this.listFormLoading = false
       } catch (error) {
         this.listFormLoading = false
@@ -576,19 +590,19 @@ export default {
       }
 
       for (const i in this.tests) {
-        if (this.tests[i].test_suite === task.test_suite) {
+        if (this.tests[i].test_suite === this.retrigger_task.test_suite) {
           this.form.test_suite_idx = +i
           break
         }
       }
-      this.form.endpoints = task.endpoint_list
-      this.form.test_cases_all = task.testcases.length === 0 || test.test_cases.length === task.testcases.length
+      this.form.endpoints = this.retrigger_task.endpoint_list
+      this.form.test_cases_all = this.retrigger_task.testcases.length === 0 || test.test_cases.length === this.retrigger_task.testcases.length
       if (!this.form.test_cases_all) {
-        this.form.test_cases = task.test_cases
+        this.form.test_cases = this.retrigger_task.test_cases
       }
-      this.form.tester = task.tester
-      this.form.parallelization = task.parallelization === true ? '1' : '0'
-      this.variables_retrigger = task.variables
+      this.form.tester = this.retrigger_task.tester
+      this.form.parallelization = this.retrigger_task.parallelization === true ? '1' : '0'
+      this.variables_retrigger = this.retrigger_task.variables
 
       this.dialogFormVisible = true
     },
