@@ -63,7 +63,7 @@ export default {
           name: '',
           email: '',
           avatar: '',
-          roles: '',
+          role: '',
           introduction: '',
           registered_on: ''
         }

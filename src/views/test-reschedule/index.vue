@@ -84,6 +84,7 @@ export default {
   },
   methods: {
     async fetchQueuingTestList() {
+      if (!this.organization_team) return
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
       this.listQuery.team = team

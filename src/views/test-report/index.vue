@@ -404,6 +404,7 @@ export default {
       this.resource_id = undefined
     },
     async fetchTaskList() {
+      if (!this.organization_team) return
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
       this.listQuery.team = team
@@ -420,6 +421,7 @@ export default {
       }
     },
     async fetchTestList() {
+      if (!this.organization_team) return
       this.listLoading = true
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
@@ -550,7 +552,8 @@ export default {
       const path = []
       this.getScriptPath(path, this.test_results, data)
       const [organization, team] = this.organization_team
-      const resp = await fetchTestResultFile({ file: path.join('/'), task_id: this.currentTask.id, organization, team })
+      const random_num = Math.random().toString(10).substring(2) // bypass the web cache
+      const resp = await fetchTestResultFile({ file: path.join('/'), task_id: this.currentTask.id, organization, team, random_num })
       fileDownload(resp, data.label)
     },
     async handleDownload(index, row) {

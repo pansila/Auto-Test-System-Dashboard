@@ -26,14 +26,22 @@
     </div>
     <el-tabs v-model="tabName" type="border-card" tab-click="onTabClick">
       <el-tab-pane key="1" label="User Scripts" name="user_scripts">
-        <keep-alive>
-          <el-tree :data="user_scripts || []" :render-content="renderContent" :highlight-current="true" @node-click="onClickScript" />
-        </keep-alive>
+        <el-container style="max-height: 200px; border: 1px solid #eee">
+          <el-aside width="100%" style="padding: 0">
+            <keep-alive>
+              <el-tree :data="user_scripts || []" :render-content="renderContent" :highlight-current="true" @node-click="onClickScript" />
+            </keep-alive>
+          </el-aside>
+        </el-container>
       </el-tab-pane>
       <el-tab-pane key="2" label="Backing Scripts" name="backing_scripts">
-        <keep-alive>
-          <el-tree :data="backing_scripts || []" :render-content="renderContent" @node-click="onClickScript" />
-        </keep-alive>
+        <el-container style="max-height: 200px; border: 1px solid #eee">
+          <el-aside width="100%" style="padding: 0">
+            <keep-alive>
+              <el-tree :data="backing_scripts || []" :render-content="renderContent" @node-click="onClickScript" />
+            </keep-alive>
+          </el-aside>
+        </el-container>
       </el-tab-pane>
     </el-tabs>
     <div v-show="tabName === 'user_scripts'" :id="userScriptID" style="margin-top: 30px" />
@@ -201,6 +209,9 @@ export default {
       this.backing_scripts = data.backing_scripts.children
     },
     async updateScriptContent(script_type) {
+      if (!this.organization_team) return
+      const [organization, team] = this.organization_team
+
       if (!this.currentNode) {
         return
       }
@@ -216,8 +227,6 @@ export default {
 
       const path = []
       this.getScriptPath(path, scripts, this.currentNode.data)
-
-      const [organization, team] = this.organization_team
 
       await updateScript({
         file: path.join('/'),
@@ -312,6 +321,9 @@ export default {
       })
     },
     async onClickScript(data, node) {
+      if (!this.organization_team) return
+      const [organization, team] = this.organization_team
+
       this.lastNode = this.currentNode
 
       if (this.currentNode && this.currentNode.data._flag === DOC_STATE_MODIFING) {
@@ -328,7 +340,6 @@ export default {
       const path = []
       this.getScriptPath(path, this.scripts, data)
 
-      const [organization, team] = this.organization_team
       const no_cache = data._flag === DOC_STATE_MODIFIED || !data._flag
       const res_data = await getScript(
         {
@@ -385,6 +396,8 @@ export default {
       return node
     },
     async remove(node, data) {
+      if (!this.organization_team) return
+      const [organization, team] = this.organization_team
       const path = []
       this.getScriptPath(path, this.scripts, data)
 
@@ -393,8 +406,6 @@ export default {
       const index = children.findIndex(d => d.$treeNodeId === data.$treeNodeId)
       children.splice(index, 1)
       this.currentNode = null
-
-      const [organization, team] = this.organization_team
 
       if (data._flag !== DOC_STATE_CREATED) {
         await removeScript({
@@ -446,21 +457,26 @@ export default {
     beforeRemove(file, fileList) {
       return this.$confirm(`Are you sure to delte ${file.name}?`)
     },
-    async onUploadFileChange(file, fileList) {
-      this.fileList = fileList
-
+    async __onUploadFileChange() {
+      if (!this.organization_team) return
       const [organization, team] = this.organization_team
-      this.fileList.forEach(async file => {
-        const formData = new FormData()
-        formData.append('script_type', this.tabName)
-        formData.append('file', file.raw)
-        formData.append('organization', organization)
-        formData.append('team', team)
-        await uploadScripts(formData)
+
+      const formData = new FormData()
+      formData.append('script_type', this.tabName)
+      formData.append('organization', organization)
+      formData.append('team', team)
+      this.fileList.forEach(file => {
+        formData.append(file.name, file.raw)
       })
+      await uploadScripts(formData)
 
       setTimeout(() => { this.fileList = [] }, 5000)
       setTimeout(this.fetchScriptList, 1000)
+    },
+    _onUploadFileChange: debounce(function() { this.__onUploadFileChange() }, 500),
+    onUploadFileChange(file, fileList) {
+      this.fileList = fileList
+      this._onUploadFileChange()
     }
   }
 }

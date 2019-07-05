@@ -196,7 +196,7 @@ export default {
         task_data.parallelization = true
       }
       task_data.priority = this.form.priority
-      if (!this.form.test_cases_all) {
+      if (this.form.test_cases && this.form.test_cases.length !== 0) {
         task_data.test_cases = this.form.test_cases
       }
       const vars = this.variables
@@ -227,6 +227,7 @@ export default {
       await this.fetchData()
     },
     async fetchData() {
+      if (!this.organization_team) return
       const [organization, team] = this.organization_team
       const tests = await fetchTests({ organization, team })
       if (!tests) {
