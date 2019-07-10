@@ -50,7 +50,7 @@
     <el-dialog title="Create A New Team" :visible.sync="dialogNewTeamVisible">
       <el-form ref="form" label-width="120px">
         <el-form-item label="Team Name">
-          <el-input v-model="org_name" />
+          <el-input v-model="team_name" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -61,12 +61,12 @@
     <el-dialog title="Join An Team" :visible.sync="dialogJoinTeamVisible">
       <el-form ref="form" label-width="120px">
         <el-form-item label="Team Name">
-          <el-select v-model="org_join" placeholder="Please choose a team to join">
+          <el-select v-model="team_join" placeholder="Please choose a team to join">
             <el-option
-              v-for="org in all_teams"
-              :key="org.label"
-              :label="org.label"
-              :value="org.value"
+              v-for="team in all_teams"
+              :key="team.label"
+              :label="team.label"
+              :value="team.value"
             />
           </el-select>
         </el-form-item>
@@ -107,8 +107,8 @@ export default {
       organization: null,
       joined_teams: [],
       all_teams: [],
-      org_name: '',
-      org_join: null,
+      team_name: '',
+      team_join: null,
       avatar_url: process.env.VUE_APP_BASE_API + '/team/avatar',
       form: {
       }
@@ -138,6 +138,19 @@ export default {
       }
     }
   },
+  watch: {
+    async organization(val) {
+      if (val) {
+        try {
+          this.all_teams = await fetchAllTeams({ organization_id: val })
+        } catch (e) {
+          this.all_teams = []
+        }
+      } else {
+        this.all_teams = []
+      }
+    }
+  },
   async created() {
     await this.getTeams()
     this.eventHub.$on('ORGANIZATION_LEAVE', async(organization_id) => {
@@ -154,12 +167,11 @@ export default {
     async getTeams() {
       this.joined_organizations = await fetchJoinedOrganizations()
       this.joined_teams = await fetchJoinedTeams()
-      this.all_teams = await fetchAllTeams()
       this.organizations = await fetchJoinedOrganizationTeams()
     },
     async onNewTeamSubmit() {
       try {
-        await newTeam({ name: this.org_name, organization_id: this.organization })
+        await newTeam({ name: this.team_name, organization_id: this.organization })
         this.$message({
           message: 'Team has been created successfully',
           type: 'success',
@@ -173,7 +185,7 @@ export default {
     },
     async onJoinTeamSubmit() {
       try {
-        await joinTeam({ id: this.org_join, organization_id: this.organization })
+        await joinTeam({ team_id: this.team_join, organization_id: this.organization })
         this.$message({
           message: 'Join the team successfully',
           type: 'success',

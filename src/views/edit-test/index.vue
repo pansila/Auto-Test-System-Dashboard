@@ -199,10 +199,7 @@ export default {
   },
   methods: {
     async fetchScriptList() {
-      if (!this.organization_team && !this.organizations) {
-        console.error('selected organization and team are incorrect')
-        return
-      }
+      if (!this.organization_team && !this.organizations) return
       const [organization, team] = this.organization_team
       const data = await fetchScripts({ organization, team })
       this.user_scripts = data.user_scripts.children

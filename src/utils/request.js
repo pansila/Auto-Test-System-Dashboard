@@ -50,9 +50,9 @@ service.interceptors.response.use(
     if (res.status === 304) {
       return
     }
-    if (res.data && res.data.data && res.data.code !== 20000) {
+    if (res.data && res.data.code !== 20000) {
       Message({
-        message: res.data.data.message || 'error',
+        message: res.data.message || 'error',
         type: 'error',
         duration: 5 * 1000
       })

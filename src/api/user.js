@@ -163,10 +163,11 @@ export function fetchJoinedTeams() {
   })
 }
 
-export function fetchAllTeams() {
+export function fetchAllTeams(params) {
   return request({
     url: '/team/all',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 

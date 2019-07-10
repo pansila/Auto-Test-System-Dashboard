@@ -96,7 +96,7 @@ export default {
       return false
     })
     this.organizations.forEach(async(org) => {
-      this.users[org.label] = await fetchOrganizationUsers({ organization: org.value })
+      this.users[org.label] = await fetchOrganizationUsers({ organization_id: org.value })
       this.users[org.label] = this.users[org.label].filter(user => {
         if (user.email !== this.email) return true
         return false
@@ -123,7 +123,7 @@ export default {
     },
     async onTransfer(organization) {
       try {
-        await transferOwnership({ organization: organization.value, new_owner: this.new_owners[organization.label] })
+        await transferOwnership({ organization_id: organization.value, new_owner: this.new_owners[organization.label] })
         this.$message({
           message: 'Ownership has been transferred successfully',
           type: 'success'

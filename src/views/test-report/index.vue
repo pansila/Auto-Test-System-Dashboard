@@ -196,10 +196,8 @@ export default {
       return statusMap[status]
     },
     dateFilter(time) {
-      const date = new Date()
-      date.setTime(time)
-      return date.toLocaleString({ year: 'numeric', month: 'numeric', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', second: 'numeric' })
+      const date = new Date(time)
+      return date.toLocaleString()
     }
   },
   data() {

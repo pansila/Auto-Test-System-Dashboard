@@ -152,7 +152,7 @@ export default {
     },
     async onJoinOrgSubmit() {
       try {
-        await joinOrganization({ id: this.org_join })
+        await joinOrganization({ organization_id: this.org_join })
         this.$message({
           message: 'Join the organization successfully',
           type: 'success',
