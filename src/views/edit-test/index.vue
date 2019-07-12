@@ -295,7 +295,7 @@ export default {
           <span>{node.label}</span>
           <span v-show={this.mouseover === data.$treeNodeId}>
             <el-button size='mini' type='text' on-click={ () => this.rename(data) }>Rename</el-button>
-            <el-button v-show={data.type !== 'file'} size='mini' type='text' on-click={ () => this.append(data) }>Append</el-button>
+            <el-button v-show={data.type !== 'file'} size='mini' type='text' on-click={ (e) => { this.append(data, node); e.stopPropagation() }}>Append</el-button>
             <el-button size='mini' type='text' on-click={ (e) => { this.remove(node, data); e.stopPropagation() }}>Delete</el-button>
           </span>
         </span>
@@ -304,7 +304,11 @@ export default {
     getScriptPath(path, tree, node) {
       return tree.every(e => {
         if (e.$treeNodeId === node.$treeNodeId) {
-          path.push(e.label)
+          if (e.type === 'directory') {
+            path.push(e.label + '/')
+          } else {
+            path.push(e.label)
+          }
           return false
         }
         if (e.children) {
@@ -328,11 +332,11 @@ export default {
       }
 
       this.currentNode = node
-      if (data.type !== 'file') return
       if (data._flag === DOC_STATE_CREATED) {
         this.editor.setValue('')
         return
       }
+      if (data.type !== 'file') return
 
       const path = []
       this.getScriptPath(path, this.scripts, data)
@@ -364,19 +368,59 @@ export default {
     },
     onDialogRenameOK() {
       const path = []
+      const [organization, team] = this.organization_team
+
       this.getScriptPath(path, this.scripts, this.currentNode.data)
 
       this.currentNode.data.label = this.form.name
-      updateScript({ file: path.join('/'), new_name: this.form.name, script_type: this.tabName })
+      updateScript({ file: path.join('/'), new_name: this.form.name, script_type: this.tabName, organization, team })
       this.dialogRenameVisible = false
     },
-    append(data) {
+    newFileNumber(files, match) {
+      let max_number = -1
+      files.forEach(file => {
+        const ret = match.exec(file.label)
+        if (ret) {
+          let [, number] = ret
+          if (!number) number = 0
+          if (+number > max_number) {
+            max_number = +number
+          }
+        }
+      })
+      return max_number
+    },
+    newFileName(files) {
+      const match = /New File\(?(\d*)\)?\.(md|py)/
+      const max_number = this.newFileNumber(files, match)
+      if (max_number !== -1) {
+        return `New File(${max_number + 1}).${this.tabName === 'user_scripts' ? 'md' : 'py'}`
+      }
+      return `New File.${this.tabName === 'user_scripts' ? 'md' : 'py'}`
+    },
+    newFolderName(files) {
+      const match = /New Folder\(?(\d*)\)?/
+      const max_number = this.newFileNumber(files, match)
+      if (max_number !== -1) {
+        return `New Folder(${max_number + 1})`
+      }
+      return 'New Folder'
+    },
+    append(data, node) {
       if (data.type === 'file') return
-      const newChild = { _flag: DOC_STATE_CREATED, type: 'file', label: this.tabName === 'user_scripts' ? 'New File.md' : 'New File.py', children: [] }
+      const newChild = { _flag: DOC_STATE_CREATED, type: 'file', label: '', children: [] }
       if (!data.children) {
         this.$set(data, 'children', [])
       }
+      newChild.label = this.newFileName(data.children)
       data.children.push(newChild)
+
+      this.$nextTick(async() => {
+        const newNode = node.childNodes[node.childNodes.length - 1]
+        await this.onClickScript(newNode.data, newNode)
+        newNode.data._flag = DOC_STATE_MODIFING
+        this.updateScriptContent()
+      })
     },
     data2node(nodeTree, data) {
       let node
@@ -404,14 +448,12 @@ export default {
       children.splice(index, 1)
       this.currentNode = null
 
-      if (data._flag !== DOC_STATE_CREATED) {
-        await removeScript({
-          file: path.join('/'),
-          script_type: this.tabName,
-          organization,
-          team
-        })
-      }
+      await removeScript({
+        file: path.join('/'),
+        script_type: this.tabName,
+        organization,
+        team
+      })
 
       const new_data = children[index] || children[index - 1] || parent.data
       const new_node = this.data2node(parent.childNodes, new_data)
@@ -420,27 +462,39 @@ export default {
     },
     onNewFile() {
       if (!this.currentNode) {
-        this.$message({ type: 'warning', message: 'Please specify a positon to add' })
+        this.$message({ type: 'warning', message: 'Please specify a position to add' })
         return
       }
-      const newChild = { _flag: DOC_STATE_CREATED, type: 'file', label: this.tabName === 'user_scripts' ? 'New File.md' : 'New File.py', children: [] }
       const data = this.currentNode.data
       const parent = this.currentNode.parent
       const children = parent.data.children || parent.data
       const index = children.findIndex(d => d.$treeNodeId === data.$treeNodeId)
+      const newChild = { _flag: DOC_STATE_CREATED, type: 'file', label: this.newFileName(children), children: [] }
       children.splice(index + 1, 0, newChild)
+      this.$nextTick(async() => {
+        const newNode = parent.childNodes[index + 1]
+        await this.onClickScript(newNode.data, newNode)
+        newNode.data._flag = DOC_STATE_MODIFING
+        this.updateScriptContent()
+      })
     },
     onNewFolder() {
       if (!this.currentNode) {
-        this.$message({ type: 'warning', message: 'Please specify a place to add' })
+        this.$message({ type: 'warning', message: 'Please specify a position to add' })
         return
       }
-      const newChild = { type: 'directory', label: 'New Folder', children: [] }
       const data = this.currentNode.data
       const parent = this.currentNode.parent
       const children = parent.data.children || parent.data
       const index = children.findIndex(d => d.$treeNodeId === data.$treeNodeId)
+      const newChild = { _flag: DOC_STATE_CREATED, type: 'directory', label: this.newFolderName(children), children: [] }
       children.splice(index + 1, 0, newChild)
+      this.$nextTick(async() => {
+        const newNode = parent.childNodes[index + 1]
+        await this.onClickScript(newNode.data, newNode)
+        newNode.data._flag = DOC_STATE_MODIFING
+        this.updateScriptContent()
+      })
     },
     async onTabClick() {
       if (this.currentNode && this.currentNode.data._flag === DOC_STATE_MODIFING) {
