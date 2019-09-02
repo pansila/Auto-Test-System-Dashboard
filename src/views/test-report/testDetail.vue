@@ -1,13 +1,16 @@
 <script>
-import { fetchTestDetail } from '@/api/testSuite'
-import { processRobotResult, processRobotResultStat } from './eval.js'
-import convert from 'xml-js'
+import { fetchTestResult } from '@/api/testSuite'
+import { processRobotResultXML } from './eval.js'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
   name: 'RobotResult',
+  components: { Pagination },
   data() {
     return {
       data: '',
+      testLog: [],
+      testStat: [],
       indent: 20,
       defaultExpandAll: false,
       listLoading: false,
@@ -22,7 +25,7 @@ export default {
         },
         {
           label: 'Step Content',
-          key: 'content',
+          key: 'after_content',
           align: 'left',
           minWidth: '200',
           headerAlign: 'center'
@@ -65,16 +68,6 @@ export default {
   computed: {
     children() {
       return this.defaultChildren
-    },
-    statData() {
-      if (!this.data) return []
-      const data = convert.xml2js(this.data, { addParent: true })
-      return processRobotResultStat(data)
-    },
-    tableData() {
-      if (!this.data) return []
-      const data = convert.xml2js(this.data, { addParent: true })
-      return processRobotResult(data)
     }
   },
   created() {
@@ -84,7 +77,7 @@ export default {
     async fetchData() {
       this.listLoading = true
       try {
-        this.data = await fetchTestDetail(
+        this.data = await fetchTestResult(
           {
             task_id: this.$route.query.task_id,
             organization: this.$route.query.organization,
@@ -94,6 +87,10 @@ export default {
       } catch (error) {
         console.error(error)
       }
+      const ret = processRobotResultXML(this.data)
+      this.testLog = ret['test_log']
+      console.log(this.testLog.length)
+      this.testStat = ret['test_stat']
       this.listLoading = false
     },
     statusFilter(status) {
@@ -118,28 +115,29 @@ export default {
       if (scope.row[item.key] === 'doc') {
         return <el-tag type='info'>{scope.row[item.key].toUpperCase()}</el-tag>
       } else if (scope.row[item.key] === 'msg') {
-        return <el-tag type='info'>{scope.row['level'].toUpperCase()}</el-tag>
+        return <el-tag type='info'>{scope.row['msg_level'].toUpperCase()}</el-tag>
       } else {
         return <el-tag>{scope.row[item.key] ? scope.row[item.key].toUpperCase() : null}</el-tag>
       }
     },
     generateContent(scope, item) {
-      const lines = scope.row[item.key].split('\n')
       const ret = []
 
-      if (scope.row['content_head']) {
-        ret.push(<span>{scope.row['content_head']}</span>)
+      if (scope.row['before_content']) {
+        ret.push(<span>{scope.row['before_content']}</span>)
       }
-      if (scope.row['boldInfo']) {
-        ret.push(<b>{scope.row['boldInfo']}</b>)
+      if (scope.row['content']) {
+        ret.push(<b>{scope.row['content']} </b>)
       }
-      lines.forEach(line => {
-        ret.push(<span>{line}</span>)
-        ret.push(<br />)
-      })
-
-      if (lines.length) {
-        ret.splice(-1)
+      if (scope.row['after_content']) {
+        const lines = scope.row['after_content'].split('\n')
+        lines.forEach(line => {
+          ret.push(<span>{line}</span>)
+          ret.push(<br />)
+        })
+        if (lines.length) {
+          ret.splice(-1)
+        }
       }
 
       return ret
@@ -154,23 +152,25 @@ export default {
       }
     },
     showRow({ row }) {
-      const parent = row.parent
+      const parent = row._parent
       const show = parent ? parent._expand && parent._show : true
       row._show = show
-      return show ? 'animation:treeTableShow 1s;-webkit-animation:treeTableShow 1s;' : 'display:none;'
+      return show ? { animation: 'treeTableShow 1s', '-webkit-animation': 'treeTableShow 1s' } : { display: 'none' }
     },
     showSpreadIcon(record) {
-      return (record.elements !== undefined)
+      return (record._has_children)
     },
     toggleExpanded(trIndex) {
-      const record = this.tableData[trIndex]
+      const record = this.testLog[trIndex]
       const expand = !record._expand
       record._expand = expand
+    },
+    testLogNextPage(page) {
     }
   },
   render: function(h) {
     return (<div style='margin: 30px'>
-      <el-table data={this.statData} border fit>
+      <el-table data={this.testStat} border fit>
         {this.statColumns.map(item => {
           return <el-table-column
             key={item.key}
@@ -194,7 +194,7 @@ export default {
         })}
       </el-table>
       <br/>
-      <el-table data={this.tableData} row-style={this.showRow} border>
+      <el-table data={this.testLog} row-style={this.showRow} border>
         {this.columns.map(item => {
           return <el-table-column
             key={item.key}
@@ -212,7 +212,7 @@ export default {
                     ret.push(this.generateStepName(scope, item))
                   } else if (item.key === 'status' && scope.row[item.key]) {
                     ret.push(<el-tag type={this.statusFilter(scope.row[item.key])}>{scope.row[item.key]}</el-tag>)
-                  } else if (item.key === 'content') {
+                  } else if (item.key.endsWith('content')) {
                     ret.push(this.generateContent(scope, item))
                   } else {
                     ret.push(this.generateDuration(scope, item))
@@ -225,6 +225,7 @@ export default {
           </el-table-column>
         })}
       </el-table>
+      <pagination v-show={this.testLog.length > 0} total={this.testLog.length} page={1} limit={50} onPagination={this.testLogNextPage} />
     </div>
     )
   }

@@ -158,7 +158,7 @@
         <el-button type="primary" @click="onSubmit">{{ 'confirm' }}</el-button>
       </div>
     </el-dialog>
-    <el-dialog title="Download" :visible.sync="downloadDialogVisible">
+    <el-dialog title="Please click to download the file" :visible.sync="downloadDialogVisible">
       <el-card class="box-card" shadow="never">
         <el-tree :data="test_results || []" :render-content="renderContent" @node-click="onDownloadScript" />
       </el-card>

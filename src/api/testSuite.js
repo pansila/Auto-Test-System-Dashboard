@@ -16,11 +16,11 @@ export function fetchTest(test, query) {
   })
 }
 
-export function fetchTestDetail(params) {
+export function fetchTestResult(params) {
   return request({
-    url: '/task/detail',
+    url: '/task/result',
     method: 'get',
-    responseType: 'text',
+    responseType: 'document',
     params
   })
 }
