@@ -1,6 +1,6 @@
 <script>
 import { fetchTestResult } from '@/api/testSuite'
-import { processRobotResultXML } from './eval.js'
+import { processRobotResultXML, loadRobotResultXMLNode } from './eval.js'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
@@ -89,7 +89,6 @@ export default {
       }
       const ret = processRobotResultXML(this.data)
       this.testLog = ret['test_log']
-      console.log(this.testLog.length)
       this.testStat = ret['test_stat']
       this.listLoading = false
     },
@@ -164,6 +163,9 @@ export default {
       const record = this.testLog[trIndex]
       const expand = !record._expand
       record._expand = expand
+      if (expand && (trIndex === this.testLog.length - 1 || this.testLog[trIndex] !== this.testLog[trIndex + 1]._parent)) {
+        loadRobotResultXMLNode(this.data, record.id, this.testLog)
+      }
     },
     testLogNextPage(page) {
     }

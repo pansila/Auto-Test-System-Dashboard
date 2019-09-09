@@ -248,12 +248,15 @@ export function processRobotResult(data) {
   return detailTreeToArray(tree.elements)
 }
 
+let element_id = 0
+
 export function processRobotResultXML(xmlDoc) {
   const root = xmlDoc.documentElement
   const resp = {}
 
   root.childNodes.forEach(child => {
     if (child.nodeName === 'suite') {
+      element_id = 0
       const node = { '_level': 0, '_expand': true, 'name': child.nodeName, 'content': child.attributes.getNamedItem('name').value }
       resp['test_log'] = process_test_suite(child, { parent: node })
     } else if (child.nodeName === 'statistics') {
@@ -262,6 +265,25 @@ export function processRobotResultXML(xmlDoc) {
   })
 
   return resp
+}
+
+export function loadRobotResultXMLNode(xmlDoc, el_id, table_data) {
+  const root = xmlDoc.getElementById(el_id)
+  let parent
+  let i
+
+  for (i = 0; i < table_data.length; i++) {
+    if (table_data[i].id === el_id) {
+      parent = table_data[i]
+      break
+    }
+  }
+  if (!parent) return null
+
+  const ret = process_test_suite(root, { depth: parent._level + 1, expand_level: parent._level + 1, level: parent._level, parent: parent })
+  for (let j = 1; j < ret.length; j++) {
+    table_data.splice(++i, 0, ret[j])
+  }
 }
 
 const traverse_depth = 2
@@ -308,9 +330,9 @@ function process_tag_kw(child, node, parent, flow_control) {
   }
   node['content'] = node['content'] + child.attributes.getNamedItem('name').value
 
-  if (parent['content'] === 'BuiltIn.Run Keyword') {
-    flow_control.elevate = true
-  }
+  // if (parent['content'] === 'BuiltIn.Run Keyword') {
+  //   flow_control.elevate = true
+  // }
 }
 
 function process_tag_arguments(child, node, parent, flow_control) {
@@ -353,7 +375,7 @@ function process_tag_assign(child, node, parent, flow_control) {
   flow_control.stop_cnt++
 }
 
-function process_test_suite(tree, { depth = 2, expand_level = 2, level = 0, parent = null } = {}) {
+function process_test_suite(tree, { depth = traverse_depth, expand_level = 2, level = 0, parent = null } = {}) {
   /*
   node fields:
     '_parent'
@@ -380,24 +402,35 @@ function process_test_suite(tree, { depth = 2, expand_level = 2, level = 0, pare
   tree.childNodes.forEach(child => {
     if (child.nodeType !== 1) return
     child_num += 1
-    if (counting) return
 
     flow_control.stop = false
     flow_control.elevate = false
     flow_control.depth = traverse_depth
-    const node = {}
 
+    // let parent have a certain status even it has reached the depth limit
+    if (child.nodeName === 'status') {
+      process_tag_status(child, null, parent, flow_control)
+    }
+
+    if (counting) return
+
+    const node = {}
     node['_parent'] = parent
     node['_level'] = level
     node['_expand'] = level < expand_level
     node['name'] = child.nodeName
 
-    if (child.nodeName === 'test' || child.nodeName === 'suite') {
-      node['content'] = child.attributes.getNamedItem('name').value
+    const attr = child.attributes.getNamedItem('id')
+    if (!attr) {
+      child.setAttribute('id', element_id)
+      node['id'] = element_id
+      element_id++
+    } else {
+      node['id'] = attr.value
     }
 
-    if (child.nodeName === 'status') {
-      process_tag_status(child, node, parent, flow_control)
+    if (child.nodeName === 'test' || child.nodeName === 'suite') {
+      node['content'] = child.attributes.getNamedItem('name').value
     }
 
     if (child.nodeName === 'kw') {
