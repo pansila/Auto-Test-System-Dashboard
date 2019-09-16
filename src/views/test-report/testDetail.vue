@@ -1,11 +1,9 @@
 <script>
 import { fetchTestResult } from '@/api/testSuite'
 import { processRobotResultXML, loadRobotResultXMLNode } from './eval.js'
-import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
   name: 'RobotResult',
-  components: { Pagination },
   data() {
     return {
       data: '',
@@ -166,8 +164,6 @@ export default {
       if (expand && (trIndex === this.testLog.length - 1 || this.testLog[trIndex] !== this.testLog[trIndex + 1]._parent)) {
         loadRobotResultXMLNode(this.data, record.id, this.testLog)
       }
-    },
-    testLogNextPage(page) {
     }
   },
   render: function(h) {
@@ -227,7 +223,6 @@ export default {
           </el-table-column>
         })}
       </el-table>
-      <pagination v-show={this.testLog.length > 0} total={this.testLog.length} page={1} limit={50} onPagination={this.testLogNextPage} />
     </div>
     )
   }
