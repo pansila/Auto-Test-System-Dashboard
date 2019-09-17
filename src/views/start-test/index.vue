@@ -222,6 +222,10 @@ export default {
         type: 'success'
       })
       this.resource_id = undefined
+      this.$store.dispatch('settings/changeSetting', {
+        key: 'taskqueue_update',
+        value: true
+      })
     },
     async onReset() {
       await this.fetchData()

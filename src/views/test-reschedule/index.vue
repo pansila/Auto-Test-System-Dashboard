@@ -2,13 +2,12 @@
 import Sortable from 'sortablejs'
 import { mapGetters } from 'vuex'
 import { fetchQueuingTests, updateTaskQueue, cancelTask } from '@/api/testSuite'
-import { addAttrs, treeToArray, traverseTreeEvery, cleanParentAttr } from './eval'
+import { addAttrs, treeToArray, traverseTreeEvery, cleanParentAttr } from '@/utils/tree-data'
 
 export default {
   name: 'DragTable',
   data() {
     return {
-      total: null,
       listLoading: true,
       listQuery: {
         page: 1,

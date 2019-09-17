@@ -10,7 +10,8 @@ const state = {
   fixedHeader: fixedHeader,
   sidebarLogo: sidebarLogo,
   organization_team: null,
-  organizations: []
+  organizations: [],
+  taskqueue_update: null
 }
 
 const mutations = {

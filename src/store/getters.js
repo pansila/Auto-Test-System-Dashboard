@@ -15,6 +15,7 @@ const getters = {
   permission_routes: state => state.permission.routes,
   errorLogs: state => state.errorLog.logs,
   organization_team: state => state.settings.organization_team,
-  organizations: state => state.settings.organizations
+  organizations: state => state.settings.organizations,
+  taskqueue_update: state => state.settings.taskqueue_update
 }
 export default getters

@@ -11,7 +11,6 @@ export default {
       testStat: [],
       indent: 20,
       defaultExpandAll: false,
-      listLoading: false,
       columns: [
         {
           label: 'Step Name',
@@ -73,7 +72,6 @@ export default {
   },
   methods: {
     async fetchData() {
-      this.listLoading = true
       try {
         this.data = await fetchTestResult(
           {
@@ -85,10 +83,10 @@ export default {
       } catch (error) {
         console.error(error)
       }
+      if (!this.data) return
       const ret = processRobotResultXML(this.data)
       this.testLog = ret['test_log']
       this.testStat = ret['test_stat']
-      this.listLoading = false
     },
     statusFilter(status) {
       const statusMap = {
