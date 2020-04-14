@@ -1,4 +1,4 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo, register } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -7,7 +7,10 @@ const state = {
   name: '',
   avatar: '',
   introduction: '',
-  roles: []
+  roles: [],
+  email: '',
+  registered_on: '',
+  region: ''
 }
 
 const mutations = {
@@ -25,15 +28,24 @@ const mutations = {
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
+  },
+  SET_EMAIL: (state, email) => {
+    state.email = email
+  },
+  SET_REG_DATE: (state, date) => {
+    state.registered_on = date
+  },
+  SET_REGION: (state, region) => {
+    state.region = region
   }
 }
 
 const actions = {
   // user login
   login({ commit }, userInfo) {
-    const { username, password } = userInfo
+    const { email, password } = userInfo
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
+      login({ email: email.trim(), password: password }).then(response => {
         const { data } = response
         commit('SET_TOKEN', data.token)
         setToken(data.token)
@@ -42,6 +54,14 @@ const actions = {
         reject(error)
       })
     })
+  },
+
+  async register({ commit }, userInfo) {
+    const { email, username, password } = userInfo
+    const response = await register({ email: email.trim(), username: username.trim(), password: password })
+    const { data } = response
+    commit('SET_TOKEN', data.token)
+    setToken(data.token)
   },
 
   // get user info
@@ -54,17 +74,20 @@ const actions = {
           reject('Verification failed, please Login again.')
         }
 
-        const { roles, name, avatar, introduction } = data
+        const { email, roles, username, avatar, introduction, registered_on, region } = data
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
           reject('getInfo: roles must be a non-null array!')
         }
 
+        commit('SET_EMAIL', email)
         commit('SET_ROLES', roles)
-        commit('SET_NAME', name)
+        commit('SET_NAME', username)
         commit('SET_AVATAR', avatar)
         commit('SET_INTRODUCTION', introduction)
+        commit('SET_REG_DATE', registered_on)
+        commit('SET_REGION', region)
         resolve(data)
       }).catch(error => {
         reject(error)

@@ -1,14 +1,14 @@
 <template>
   <el-card style="margin-bottom:20px;">
     <div slot="header" class="clearfix">
-      <span>About me</span>
+      <span>{{ $t('profile.aboutMe') }}</span>
     </div>
 
     <div class="user-profile">
       <div class="box-center">
-        <pan-thumb :image="user.avatar" :height="'100px'" :width="'100px'" :hoverable="false">
+        <pan-thumb :image="avatar_url" :height="'100px'" :width="'100px'" :hoverable="false">
           <div>Hello</div>
-          {{ user.role }}
+          {{ user.name }}
         </pan-thumb>
       </div>
       <div class="box-center">
@@ -19,32 +19,30 @@
 
     <div class="user-bio">
       <div class="user-education user-bio-section">
-        <div class="user-bio-section-header"><svg-icon icon-class="education" /><span>Education</span></div>
+        <div class="user-bio-section-header"><svg-icon icon-class="email" /><span>{{ user.email }}</span></div>
+      </div>
+
+      <div class="user-education user-bio-section">
+        <div class="user-bio-section-header"><i class="el-icon-time" /><span>{{ $t('profile.joinedOn') + ' ' + new Date(user.registered_on).toLocaleDateString() }}</span></div>
+      </div>
+
+      <div class="user-education user-bio-section">
+        <div class="user-bio-section-header"><svg-icon icon-class="education" /><span>{{ $t('profile.introduction') }}</span></div>
         <div class="user-bio-section-body">
           <div class="text-muted">
-            JS in Computer Science from the University of Technology
+            {{ user.introduction }}
           </div>
         </div>
       </div>
 
       <div class="user-skills user-bio-section">
-        <div class="user-bio-section-header"><svg-icon icon-class="skill" /><span>Skills</span></div>
+        <div class="user-bio-section-header"><svg-icon icon-class="skill" /><span>{{ $t('profile.reputation') }}</span></div>
         <div class="user-bio-section-body">
           <div class="progress-item">
-            <span>Vue</span>
+            <el-row type="flex" justify="center">
+              <el-tag>Test Master</el-tag>
+            </el-row>
             <el-progress :percentage="70" />
-          </div>
-          <div class="progress-item">
-            <span>JavaScript</span>
-            <el-progress :percentage="18" />
-          </div>
-          <div class="progress-item">
-            <span>Css</span>
-            <el-progress :percentage="12" />
-          </div>
-          <div class="progress-item">
-            <span>ESLint</span>
-            <el-progress :percentage="100" status="success" />
           </div>
         </div>
       </div>
@@ -65,9 +63,16 @@ export default {
           name: '',
           email: '',
           avatar: '',
-          role: ''
+          role: '',
+          introduction: '',
+          registered_on: ''
         }
       }
+    }
+  },
+  data() {
+    return {
+      avatar_url: process.env.VUE_APP_BASE_API + '/user/avatar'
     }
   }
 }
@@ -121,13 +126,16 @@ export default {
 
   .user-bio-section {
     font-size: 14px;
-    padding: 15px 0;
+    padding-bottom: 15px;
 
     .user-bio-section-header {
       border-bottom: 1px solid #dfe6ec;
       padding-bottom: 10px;
-      margin-bottom: 10px;
       font-weight: bold;
+    }
+
+    .user-bio-section-body {
+      margin-top: 10px;
     }
   }
 }

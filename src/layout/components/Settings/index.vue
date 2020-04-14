@@ -4,6 +4,15 @@
       <h3 class="drawer-title">{{ $t('settings.title') }}</h3>
 
       <div class="drawer-item">
+        <el-cascader
+          v-model="organization_team"
+          :placeholder="$t('settings.affiliation')"
+          :options="organizations"
+          change-on-select
+        />
+      </div>
+
+      <div class="drawer-item">
         <span>{{ $t('settings.theme') }}</span>
         <theme-picker style="float: right;height: 26px;margin: -3px 8px 0 0;" @change="themeChange" />
       </div>
@@ -22,9 +31,9 @@
         <span>{{ $t('settings.sidebarLogo') }}</span>
         <el-switch v-model="sidebarLogo" class="drawer-switch" />
       </div>
-      <a v-if="isShowJob" href="https://panjiachen.github.io/vue-element-admin-site/zh/job/" target="_blank" class="job-link">
+      <a target="_blank" class="job-link">
         <el-alert
-          title="部门目前非常缺人！有兴趣的可以点击了解详情。坐标: 字节跳动"
+          :title="organization_team_id"
           type="success"
           :closable="false"
         />
@@ -41,12 +50,10 @@
 
 <script>
 import ThemePicker from '@/components/ThemePicker'
+import { fetchJoinedOrganizationTeams } from '@/api/user'
 
 export default {
   components: { ThemePicker },
-  data() {
-    return {}
-  },
   computed: {
     isShowJob() {
       return this.$store.getters.language === 'zh'
@@ -84,20 +91,38 @@ export default {
         })
       }
     },
-    supportPinyinSearch: {
+    organizations: {
       get() {
-        return this.$store.state.settings.supportPinyinSearch
+        return this.$store.state.settings.organizations
       },
       set(val) {
         this.$store.dispatch('settings/changeSetting', {
-          key: 'supportPinyinSearch',
+          key: 'organizations',
           value: val
         })
       }
     },
-    lang() {
-      return this.$store.getters.language
+    organization_team: {
+      get() {
+        return this.$store.state.settings.organization_team
+      },
+      set(val) {
+        this.$store.dispatch('settings/changeSetting', {
+          key: 'organization_team',
+          value: val
+        })
+      }
+    },
+    organization_team_id() {
+      if (this.organization_team) {
+        return 'Organization ID: ' + this.organization_team.join('/')
+      } else {
+        return ''
+      }
     }
+  },
+  async created() {
+    this.organizations = await fetchJoinedOrganizationTeams()
   },
   methods: {
     themeChange(val) {

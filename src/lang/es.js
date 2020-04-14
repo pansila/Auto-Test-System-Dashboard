@@ -1,6 +1,13 @@
 export default {
   route: {
     dashboard: 'Panel de control',
+    startTest: 'Start Test',
+    testReschedule: 'Test Reschedule',
+    editTest: 'Edit Test',
+    testReport: 'Test Report',
+    testDetail: 'Test Details',
+    testEndpoint: 'Test Endpoint',
+    testStore: 'Test Store',
     documentation: 'Documentación',
     guide: 'Guía',
     permission: 'Permisos',
@@ -75,9 +82,14 @@ export default {
   login: {
     title: 'Formulario de acceso',
     logIn: 'Acceso',
+    email: 'Email',
     username: 'Usuario',
     password: 'Contraseña',
+    confirmPassword: 'Confirm Password',
     any: 'nada',
+    register: 'Register',
+    createAccount: 'Create An Account',
+    logIn2: 'already have an account? login',
     thirdparty: 'Conectar con',
     thirdpartyTips: 'No se puede simular en local, así que combine su propia simulación de negocios. ! !'
   },
@@ -93,7 +105,10 @@ export default {
     tips: 'In some cases it is not suitable to use v-permission, such as element Tab component or el-table-column and other asynchronous rendering dom cases which can only be achieved by manually setting the v-if.',
     delete: 'Borrar',
     confirm: 'Confirmar',
-    cancel: 'Cancelar'
+    cancel: 'Cancelar',
+    quit: 'Quit',
+    transfer: 'Transfer',
+    update: 'Update'
   },
   guide: {
     description: 'The guide page is useful for some people who entered the project for the first time. You can briefly introduce the features of the project. Demo is based on ',
@@ -166,10 +181,63 @@ export default {
     closeAll: 'Cerrar todos'
   },
   settings: {
-    title: 'Page style setting',
+    affiliation: 'Organization / Team',
+    title: 'Global setting',
     theme: 'Theme Color',
     tagsView: 'Open Tags-View',
     fixedHeader: 'Fixed Header',
     sidebarLogo: 'Sidebar Logo'
+  },
+  profile: {
+    timeline: 'Timeline',
+    account: 'Account',
+    password: 'Password',
+    avatar: 'Avatar',
+    organization: 'Organization',
+    organization_id: 'Organization ID',
+    team: 'Team',
+    team_id: 'Team ID',
+    organizationTeam: 'Organization / Team',
+    delete: 'Delete Account',
+    joinedOn: 'Joined On',
+    introduction: 'Introduction',
+    reputation: 'Reputation',
+    region: 'Region',
+    origPassword: 'Original Password',
+    newPassword: 'New Password',
+    autoAvatar: 'Avatar Generated From Email',
+    customAvatar: 'Custom Avatar',
+    organizationsJoined: 'Organizations Joined',
+    organizationName: 'Organization Name',
+    owner: 'Owner',
+    action: 'Action',
+    newOrganization: 'New Organization',
+    joinOrganization: 'Join Organization',
+    placeholderNewOrganization: 'Great organization has a great name',
+    placeholderJoinOrganization: 'Please choose an organization to join',
+    organizationJoinFirst: 'Please join an organization first',
+    teamsJoined: 'Teams Joined',
+    teamName: 'Team Name',
+    newTeam: 'New Team',
+    joinTeam: 'Join Team',
+    placeholderNewTeam: 'Please enter a team name',
+    placeholderJoinTeam: 'Please choose a team to join',
+    placeholderTransfer: 'Plase choose one to transfer ownership',
+    transferOwnership: 'Transfer Ownership',
+    deleteWarning: 'Be noted that the operation is not reversible',
+    aboutMe: 'About Me'
+  },
+  stats: {
+    finished: 'Tests Finished',
+    failed: 'Tests Failed',
+    succeeded: 'Tests Succeeded',
+    running: 'Tests Running',
+    waiting: 'Tests Waiting'
+  },
+  testTable: {
+    test_suite: 'Test Suite',
+    run_date: 'Run Date',
+    tester: 'Tester',
+    status: 'Status'
   }
 }

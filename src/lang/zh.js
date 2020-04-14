@@ -1,6 +1,13 @@
 export default {
   route: {
     dashboard: '首页',
+    startTest: '发起测试',
+    testReschedule: '测试重排',
+    editTest: '编辑测试',
+    testReport: '测试报告',
+    testDetail: '测试细节',
+    testEndpoint: '测试节点',
+    testStore: '测试商店',
     documentation: '文档',
     guide: '引导页',
     permission: '权限测试页',
@@ -75,9 +82,14 @@ export default {
   login: {
     title: '系统登录',
     logIn: '登录',
+    email: '电子邮箱',
     username: '账号',
     password: '密码',
+    confirmPassword: '确认密码',
     any: '随便填',
+    register: '注册',
+    createAccount: '创建账号',
+    logIn2: '已经有账号了？立即登录',
     thirdparty: '第三方登录',
     thirdpartyTips: '本地不能模拟，请结合自己业务进行模拟！！！'
   },
@@ -93,7 +105,10 @@ export default {
     tips: '在某些情况下，不适合使用 v-permission。例如：Element-UI 的 el-tab 或 el-table-column 以及其它动态渲染 dom 的场景。你只能通过手动设置 v-if 来实现。',
     delete: '删除',
     confirm: '确定',
-    cancel: '取消'
+    cancel: '取消',
+    quit: '退出',
+    transfer: '转移',
+    update: '更新'
   },
   guide: {
     description: '引导页对于一些第一次进入项目的人很有用，你可以简单介绍下项目的功能。本 Demo 是基于',
@@ -166,10 +181,63 @@ export default {
     closeAll: '关闭所有'
   },
   settings: {
-    title: '系统布局配置',
+    affiliation: '组织 / 团队',
+    title: '全局配置',
     theme: '主题色',
     tagsView: '开启 Tags-View',
     fixedHeader: '固定 Header',
     sidebarLogo: '侧边栏 Logo'
+  },
+  profile: {
+    timeline: '时间线',
+    account: '账户',
+    password: '密码',
+    avatar: '头像',
+    organization: '组织',
+    organization_id: '组织唯一标识符',
+    team: '团队',
+    team_id: '团队唯一标识符',
+    organizationTeam: '组织 / 团队',
+    delete: '删除账户',
+    joinedOn: '加入于',
+    introduction: '介绍',
+    reputation: '成就',
+    region: '地区',
+    origPassword: '原始密码',
+    newPassword: '新密码',
+    autoAvatar: '从邮箱地址产生头像',
+    customAvatar: '自定义头像',
+    organizationsJoined: '加入的组织',
+    organizationName: '组织名称',
+    owner: '所有人',
+    action: '操作',
+    newOrganization: '创建组织',
+    joinOrganization: '加入组织',
+    placeholderNewOrganization: '伟大的组织都有一个伟大的名字',
+    placeholderJoinOrganization: '请选择一个组织加入',
+    organizationJoinFirst: '请先选择一个组织加入',
+    teamsJoined: '加入的团队',
+    teamName: '团队名称',
+    newTeam: '创建团队',
+    joinTeam: '加入团队',
+    placeholderNewTeam: '请输入团队名称',
+    placeholderJoinTeam: '请选择一个团队加入',
+    placeholderTransfer: '请选择一个成员以转移所有权',
+    transferOwnership: '转移所有权',
+    deleteWarning: '请注意该操作不可恢复',
+    aboutMe: '关于我'
+  },
+  stats: {
+    finished: '完成的测试',
+    failed: '失败的测试',
+    succeeded: '成功的测试',
+    running: '运行中的测试',
+    waiting: '等待中的测试'
+  },
+  testTable: {
+    test_suite: '测试套件',
+    run_date: '运行日期',
+    tester: '操作人员',
+    status: '结果'
   }
 }

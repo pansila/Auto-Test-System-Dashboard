@@ -1,6 +1,13 @@
 export default {
   route: {
     dashboard: 'トップ',
+    startTest: 'Start Test',
+    testReschedule: 'Test Reschedule',
+    editTest: 'Edit Test',
+    testReport: 'Test Report',
+    testDetail: 'Test Details',
+    testEndpoint: 'Test Endpoint',
+    testStore: 'Test Store',
     documentation: 'ドキュメント',
     guide: 'ガイド',
     permission: '権限',
@@ -75,9 +82,14 @@ export default {
   login: {
     title: 'ユーザログイン',
     logIn: 'ログイン',
+    email: 'Email',
     username: 'ユーザ名',
     password: 'パスワード',
+    confirmPassword: 'Confirm Password',
     any: 'password',
+    register: 'Register',
+    createAccount: 'Create An Account',
+    logIn2: 'already have an account? login',
     thirdparty: '外部IDでログイン',
     thirdpartyTips: 'ローカル環境ではログインできません。実装が必要です。'
   },
@@ -93,7 +105,10 @@ export default {
     tips: 'v-permissionは使えない時があります。例えば: Element-UI の el-tab、 el-table-column 及び他の dom。v-ifを使う必要があります。',
     delete: '削除',
     confirm: '確認',
-    cancel: 'キャンセル'
+    cancel: 'キャンセル',
+    quit: 'Quit',
+    transfer: 'Transfer',
+    update: 'Update'
   },
   guide: {
     description: 'ガイドは各機能の説明です。',
@@ -166,10 +181,63 @@ export default {
     closeAll: 'すべて閉じる'
   },
   settings: {
-    title: 'システムテーマ',
+    affiliation: 'Organization / Team',
+    title: 'Global setting',
     theme: 'テーマ色',
     tagsView: 'Tags-View 開く',
     fixedHeader: 'Fixed Header',
     sidebarLogo: 'Sidebar Logo'
+  },
+  profile: {
+    timeline: 'Timeline',
+    account: 'Account',
+    password: 'Password',
+    avatar: 'Avatar',
+    organization: 'Organization',
+    organization_id: 'Organization ID',
+    team: 'Team',
+    team_id: 'Team ID',
+    organizationTeam: 'Organization / Team',
+    delete: 'Delete Account',
+    joinedOn: 'Joined On',
+    introduction: 'Introduction',
+    reputation: 'Reputation',
+    region: 'Region',
+    origPassword: 'Original Password',
+    newPassword: 'New Password',
+    autoAvatar: 'Avatar Generated From Email',
+    customAvatar: 'Custom Avatar',
+    organizationsJoined: 'Organizations Joined',
+    organizationName: 'Organization Name',
+    owner: 'Owner',
+    action: 'Action',
+    newOrganization: 'New Organization',
+    joinOrganization: 'Join Organization',
+    placeholderNewOrganization: 'Great organization has a great name',
+    placeholderJoinOrganization: 'Please choose an organization to join',
+    organizationJoinFirst: 'Please join an organization first',
+    teamsJoined: 'Teams Joined',
+    teamName: 'Team Name',
+    newTeam: 'New Team',
+    joinTeam: 'Join Team',
+    placeholderNewTeam: 'Please enter a team name',
+    placeholderJoinTeam: 'Please choose a team to join',
+    placeholderTransfer: 'Plase choose one to transfer ownership',
+    transferOwnership: 'Transfer Ownership',
+    deleteWarning: 'Be noted that the operation is not reversible',
+    aboutMe: 'About Me'
+  },
+  stats: {
+    finished: 'Tests Finished',
+    failed: 'Tests Failed',
+    succeeded: 'Tests Succeeded',
+    running: 'Tests Running',
+    waiting: 'Tests Waiting'
+  },
+  testTable: {
+    test_suite: 'Test Suite',
+    run_date: 'Run Date',
+    tester: 'Tester',
+    status: 'Status'
   }
 }

@@ -5,11 +5,13 @@ const { showSettings, tagsView, fixedHeader, sidebarLogo, supportPinyinSearch } 
 
 const state = {
   theme: variables.theme,
-  showSettings,
-  tagsView,
-  fixedHeader,
-  sidebarLogo,
-  supportPinyinSearch
+  showSettings: showSettings,
+  tagsView: tagsView,
+  fixedHeader: fixedHeader,
+  sidebarLogo: sidebarLogo,
+  organization_team: null,
+  organizations: [],
+  taskqueue_update: null
 }
 
 const mutations = {
