@@ -47,7 +47,7 @@ service.interceptors.response.use(
   },
   error => {
     const res = error.response
-    if (res.status === 304) {
+    if (res.status && res.status === 304) {
       return
     }
     if (res.data && res.data.code !== 20000) {

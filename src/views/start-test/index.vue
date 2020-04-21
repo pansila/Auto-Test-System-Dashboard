@@ -5,7 +5,7 @@
         <el-row :gutter="10" type="flex">
           <el-col>
             <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run" style="width: 50%" @change="onTestSuiteChange">
-              <el-option v-for="(t, i) in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="i" />
+              <el-option v-for="(t, i) in test_suite_list" :key="t" :label="t" :value="i" />
             </el-select>
           </el-col>
         </el-row>
@@ -107,7 +107,7 @@ export default {
   name: 'StartTest',
   filters: {
     replaceSpace(data) {
-      return data.replace(/-/g, ' ')
+      return data.replace(/-/g, ' ').replace(/_/g, ' ')
     }
   },
   data() {
@@ -119,9 +119,11 @@ export default {
       listLoading: false,
       resource_id: undefined,
       term: undefined,
+      termBuffer: '',
       socket: undefined,
       testStatusDialogVisible: false,
       socketURL: process.env.NODE_ENV === 'development' ? 'ws://127.0.0.1:5000' : '',
+      task_id: null,
       form: {
         tester: '',
         cc: [],
@@ -162,6 +164,27 @@ export default {
         }
       }
       return variables
+    },
+    // append path if found duplicate test suites to tell them apart
+    test_suite_list() {
+      const tss = []
+      for (let i = 0; i < this.tests.length; i++) {
+        if (i === 0) {
+          tss.push(this.tests[i].test_suite)
+          continue
+        }
+        let j
+        for (j = 0; j < i; j++) {
+          if (this.tests[i].test_suite === this.tests[j].test_suite) {
+            tss.push(this.tests[i].test_suite + ` (${this.tests[i].path})`)
+            break
+          }
+        }
+        if (j === i) {
+          tss.push(this.tests[i].test_suite)
+        }
+      }
+      return tss
     }
   },
   watch: {
@@ -189,6 +212,9 @@ export default {
     this.socket.on('disconnect', () => {
       this.leave_room()
     })
+    this.socket.on('connect', () => {
+      this.join_room(this.task_id)
+    })
   },
   destroyed() {
     this.leave_room()
@@ -196,23 +222,29 @@ export default {
   },
   methods: {
     join_room(task_id) {
-      if (this.organization_team) {
-        const [organization, team] = this.organization_team
-        this.socket.off('console log')
-        this.socket.on('console log', (data) => {
+      if (!this.organization_team) return
+      const [organization, team] = this.organization_team
+      if (this.term) this.term.reset()
+      this.socket.off('console log')
+      this.socket.on('console log', (data) => {
+        if (task_id === data.task_id) {
           if (this.term) {
-            if (task_id === data.task_id) {
-              this.term.write(data.message)
+            if (this.termBuffer) {
+              this.term.write(this.termBuffer)
+              this.termBuffer = null
             }
+            this.term.write(data.message)
+          } else {
+            this.termBuffer += data.message
           }
-        })
-        this.socket.emit('join', {
-          'X-Token': getToken(),
-          organization,
-          team,
-          task_id
-        })
-      }
+        }
+      })
+      this.socket.emit('join', {
+        'X-Token': getToken(),
+        organization,
+        team,
+        task_id
+      })
     },
     leave_room() {
       if (this.organization_team) {
@@ -226,6 +258,7 @@ export default {
       }
     },
     initTerminal(task_id) {
+      this.task_id = task_id
       if (this.term) {
         this.join_room(task_id)
         return
@@ -237,7 +270,6 @@ export default {
       this.term.open(terminalContainer)
       fitAddon.fit()
       this.term._initialized = true
-
       this.join_room(task_id)
     },
     async onSubmit() {
@@ -269,6 +301,7 @@ export default {
       const task_data = {}
 
       task_data.test_suite = this.tests[this.form.test_suite_idx].test_suite
+      task_data.path = this.tests[this.form.test_suite_idx].path
       task_data.endpoint_list = this.form.endpoints
       if (this.form.parallelization === '0') {
         task_data.parallelization = false

@@ -17,7 +17,7 @@ export default {
       sortable: null,
       indent: 20,
       taskqueues: [],
-      list: null,
+      list: [],
       notMove: null,
       columns: [
         {

@@ -163,7 +163,6 @@ export default {
         organization,
         team
       })
-      console.log('join room')
     },
     leave_room() {
       if (this.organization_team) {

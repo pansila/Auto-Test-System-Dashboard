@@ -222,6 +222,14 @@ export function uploadPackage(data) {
   })
 }
 
+export function removePackage(data) {
+  return request({
+    url: '/store/',
+    method: 'delete',
+    data: data
+  })
+}
+
 export function fetchPackages(query) {
   return request({
     url: '/store/',
@@ -232,7 +240,7 @@ export function fetchPackages(query) {
 
 export function installPackage(data) {
   return request({
-    url: '/store/',
+    url: '/store/package',
     method: 'put',
     data: data
   })
@@ -240,8 +248,24 @@ export function installPackage(data) {
 
 export function uninstallPackage(data) {
   return request({
-    url: '/store/',
+    url: '/store/package',
     method: 'delete',
     data: data
+  })
+}
+
+export function updatePackage(data) {
+  return request({
+    url: '/store/package',
+    method: 'patch',
+    data: data
+  })
+}
+
+export function getPackageInfo(query) {
+  return request({
+    url: '/store/package',
+    method: 'get',
+    params: query
   })
 }

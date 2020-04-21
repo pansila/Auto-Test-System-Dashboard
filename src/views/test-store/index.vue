@@ -6,6 +6,7 @@
           <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" />
           <el-button class="filter-item" icon="el-icon-search" @click="handleFilter">{{ 'search' }}</el-button>
           <el-upload
+            ref="upload"
             class="upload-demo filter-item"
             action="http://abc.com"
             :on-remove="handleRemove"
@@ -16,6 +17,7 @@
             :on-exceed="handleExceed"
             :on-change="onUploadFileChange"
             :on-error="onUploadError"
+            :on-success="onUploadSuccess"
             :show-file-list="false"
             :http-request="onPackageUpload"
             style="display: inline-flex;"
@@ -27,8 +29,7 @@
           <el-radio-group v-model="extenstionFilter">
             <el-radio-button key="test_suite" label="Test Suite">Test Suite</el-radio-button>
             <el-radio-button key="test_library" label="Test Library">Test Library</el-radio-button>
-            <el-radio-button key="endpoint_library" label="Endpoint Library">Endpoint Library</el-radio-button>
-            <el-radio-button key="plugin" label="Plugin">Plugin</el-radio-button>
+            <el-radio-button key="plugin" label="Plugin">System Plugin</el-radio-button>
           </el-radio-group>
         </el-col>
         <el-col style="width: auto;">
@@ -43,7 +44,7 @@
       >
         <el-table-column label="Name" min-width="100">
           <template slot-scope="scope">
-            {{ scope.row.name }}
+            {{ scope.row.name | replaceSpace }}
           </template>
         </el-table-column>
         <el-table-column label="Summary" min-width="200">
@@ -51,7 +52,7 @@
             {{ scope.row.summary }}
           </template>
         </el-table-column>
-        <el-table-column label="Stars" min-width="100">
+        <el-table-column label="Stars" min-width="50">
           <template slot-scope="scope">
             <svg-icon v-for="n in +scope.row.stars" :key="n" icon-class="star" />
           </template>
@@ -76,25 +77,29 @@
       </el-card> -->
     </div>
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="fetchPackageList" />
-    <el-dialog title="Package Descriptor" :visible.sync="descriptionVisible" width="800px" :modal="true">
+    <el-dialog title="Package Description" :visible.sync="descriptionVisible" width="800px" :modal="true">
       <el-container>
         <el-header>
           <el-row type="flex" justify="space-between">
             <el-col style="width: auto;">
-              <div type="flex-inline">
-                <span>Rating: </span>
-                <el-rate v-model="stars" style="margin-bottom: 10px;" />
-              </div>
-              <span style="margin-bottom: 10px;">Download Times: {{ current_package && current_package.download_times || 0 }}</span>
+              <el-row style="margin-bottom: 10px;">
+                <el-col style="width: auto;">
+                  <span>Rate Me:</span>
+                </el-col>
+                <el-col style="width: auto;">
+                  <el-rate v-model="stars" @change="onStarChange" />
+                </el-col>
+              </el-row>
               <div>
-                <span>Version: </span>
-                <el-select v-model="version" size="mini">
+                <span>Version:</span>
+                <el-select v-model="version" size="mini" @change="onVersionChange">
                   <el-option v-for="v in versions" :key="v" :label="v" :value="v" />
                 </el-select>
               </div>
             </el-col>
             <el-col style="width: auto;">
-              <el-button @click="uninstall">Uninstall</el-button>
+              <el-button type="primary" @click="remove">Remove</el-button>
+              <el-button type="primary" @click="uninstall">Uninstall</el-button>
               <el-button type="primary" @click="install">Install</el-button>
             </el-col>
           </el-row>
@@ -111,13 +116,19 @@
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import { mapGetters } from 'vuex'
-import { fetchPackages, uploadPackage, installPackage, uninstallPackage } from '@/api/testSuite'
+import { fetchPackages, uploadPackage, updatePackage, getPackageInfo, installPackage, uninstallPackage, removePackage } from '@/api/testSuite'
 import Viewer from 'tui-editor/dist/tui-editor-Viewer'
 import 'tui-editor/dist/tui-editor.css' // editor ui
+import 'tui-editor/dist/tui-editor-contents.css' // editor content
 
 export default {
   name: 'DragTable',
   components: { Pagination },
+  filters: {
+    replaceSpace(data) {
+      return data.replace(/-/g, ' ').replace(/_/g, ' ')
+    }
+  },
   data() {
     return {
       currentDate: new Date(),
@@ -164,8 +175,7 @@ export default {
   },
   methods: {
     async fetchPackageList() {
-      if (!this.organization_team) return
-      const [organization, team] = this.organization_team
+      const [organization, team] = this.organization_team || [null, null]
       this.listQuery.organization = organization
       this.listQuery.team = team
       this.listQuery.package_type = this.extenstionFilter
@@ -192,8 +202,9 @@ export default {
     },
     onUploadError(err, file, fileList) {
       console.error(err)
-      this.fileList = []
-      this.clearFiles()
+    },
+    onUploadSuccess(res, file, fileList) {
+      this.$refs.upload.clearFiles()
     },
     onUploadFileChange(file, fileList) {
       if (!this.organization_team) {
@@ -230,9 +241,12 @@ export default {
         await uploadPackage(formData)
       } catch (error) {
         this.$message.error('Failed to upload the package, please try uploading again')
+        return
       }
-      this.fileList = []
-      this.clearFiles()
+      this.$message({
+        message: 'Upload the package successfully',
+        type: 'success'
+      })
     },
     rowClicked(row) {
       this.descriptionVisible = true
@@ -252,38 +266,100 @@ export default {
         })
       })
     },
+    async onStarChange() {
+      const [organization, team] = this.organization_team || [null, null]
+      let ret
+      try {
+        ret = await updatePackage({
+          organization, team,
+          stars: this.stars,
+          proprietary: this.proprietary,
+          name: this.current_package.name,
+          package_type: this.current_package.package_type
+        })
+      } catch (error) {
+        console.error(error)
+        return
+      }
+      this.stars = ret.data.stars
+    },
+    async onVersionChange() {
+      const [organization, team] = this.organization_team || [null, null]
+      let ret
+      try {
+        ret = await getPackageInfo({
+          organization, team,
+          proprietary: this.proprietary,
+          version: this.version,
+          name: this.current_package.name,
+          package_type: this.current_package.package_type
+        })
+      } catch (error) {
+        console.error(error)
+        return
+      }
+      this.viewer.setValue(ret.data.description)
+    },
     async install() {
       if (!this.current_package) return
-      if (!this.organization_team) return
-      const [organization, team] = this.organization_team
+      const [organization, team] = this.organization_team || [null, null]
       const data = { organization, team,
         proprietary: this.proprietary,
-        package_type: this.extenstionFilter,
-        package: this.current_package,
+        name: this.current_package.name,
+        package_type: this.current_package.package_type,
         version: this.version
       }
       try {
         await installPackage(data)
       } catch (error) {
         console.error(error)
-        this.$message.error('Failed to install the extension')
+        this.$message.error('Failed to install the package')
+        return
       }
+      this.$message({
+        message: 'Install the package successfully',
+        type: 'success'
+      })
     },
     async uninstall() {
       if (!this.current_package) return
-      if (!this.organization_team) return
       const [organization, team] = this.organization_team
       const data = { organization, team,
         proprietary: this.proprietary,
-        package_type: this.extenstionFilter,
-        package: this.current_package,
+        name: this.current_package.name,
+        package_type: this.current_package.package_type,
         version: this.version
       }
       try {
         await uninstallPackage(data)
       } catch (error) {
-        this.$message.error('Failed to uninstall the extension')
+        this.$message.error('Failed to uninstall the package')
+        return
       }
+      this.$message({
+        message: 'Uninstall the package successfully',
+        type: 'success'
+      })
+    },
+    async remove() {
+      if (!this.current_package) return
+      const [organization, team] = this.organization_team
+      const data = { organization, team,
+        proprietary: this.proprietary,
+        name: this.current_package.name,
+        package_type: this.current_package.package_type,
+        version: this.version
+      }
+      try {
+        await removePackage(data)
+      } catch (error) {
+        this.$message.error('Failed to uninstall the package')
+        return
+      }
+      this.$message({
+        message: 'Uninstall the package successfully',
+        type: 'success'
+      })
     }
   }
 }
@@ -292,5 +368,8 @@ export default {
 <style>
 .page-container{
   margin: 30px;
+}
+.el-divider--horizontal{
+  margin: 0px;
 }
 </style>

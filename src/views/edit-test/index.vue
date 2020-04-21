@@ -25,27 +25,27 @@
       </el-row>
     </div>
     <el-tabs v-model="tabName" type="border-card" tab-click="onTabClick">
-      <el-tab-pane key="1" label="User Scripts" name="user_scripts">
+      <el-tab-pane key="1" label="Test Scripts" name="test_scripts">
         <el-container style="max-height: 200px; border: 1px solid #eee">
           <el-aside width="100%" style="padding: 0">
             <keep-alive>
-              <el-tree :data="user_scripts || []" :render-content="renderContent" :highlight-current="true" @node-click="onClickScript" />
+              <el-tree :data="test_scripts || []" :render-content="renderContent" :highlight-current="true" @node-click="onClickScript" />
             </keep-alive>
           </el-aside>
         </el-container>
       </el-tab-pane>
-      <el-tab-pane key="2" label="Backing Scripts" name="backing_scripts">
+      <el-tab-pane key="2" label="Test Libraries" name="test_libraries">
         <el-container style="max-height: 200px; border: 1px solid #eee">
           <el-aside width="100%" style="padding: 0">
             <keep-alive>
-              <el-tree :data="backing_scripts || []" :render-content="renderContent" @node-click="onClickScript" />
+              <el-tree :data="test_libraries || []" :render-content="renderContent" @node-click="onClickScript" />
             </keep-alive>
           </el-aside>
         </el-container>
       </el-tab-pane>
     </el-tabs>
-    <div v-show="tabName === 'user_scripts'" :id="userScriptID" style="margin-top: 30px" />
-    <div v-show="tabName === 'backing_scripts'" :id="backingScriptID" style="margin-top: 30px; width: 100%; height: 500px;" />
+    <div v-show="tabName === 'test_scripts'" :id="userScriptID" style="margin-top: 30px" />
+    <div v-show="tabName === 'test_libraries'" :id="backingScriptID" style="margin-top: 30px; width: 100%; height: 500px;" />
     <el-dialog title="Rename" :visible.sync="dialogRenameVisible">
       <el-form :model="form">
         <el-form-item label="New File Name" label-width="120px">
@@ -128,9 +128,9 @@ export default {
     return {
       userScriptEditor: null,
       backingScriptEditor: null,
-      user_scripts: null,
-      backing_scripts: null,
-      tabName: 'user_scripts',
+      test_scripts: null,
+      test_libraries: null,
+      tabName: 'test_scripts',
       mouseover: 0,
       currentNode: null,
       lastNode: null,
@@ -155,10 +155,10 @@ export default {
       return options
     },
     editor() {
-      return this.tabName === 'user_scripts' ? this.userScriptEditor : this.backingScriptEditor
+      return this.tabName === 'test_scripts' ? this.userScriptEditor : this.backingScriptEditor
     },
     scripts() {
-      return this.tabName === 'user_scripts' ? this.user_scripts : this.backing_scripts
+      return this.tabName === 'test_scripts' ? this.test_scripts : this.test_libraries
     }
   },
   watch: {
@@ -202,8 +202,8 @@ export default {
       if (!this.organization_team && !this.organizations) return
       const [organization, team] = this.organization_team
       const data = await fetchScripts({ organization, team })
-      this.user_scripts = data.user_scripts.children
-      this.backing_scripts = data.backing_scripts.children
+      this.test_scripts = data.test_scripts.children
+      this.test_libraries = data.test_libraries.children
     },
     async updateScriptContent(script_type) {
       if (!this.organization_team) return
@@ -212,15 +212,12 @@ export default {
       if (!this.currentNode) {
         return
       }
-      if (!this.organization_team) {
-        return
-      }
       if (this.currentNode.data._flag !== DOC_STATE_MODIFING) {
         return
       }
 
-      const scripts = (script_type && (script_type === 'user_scripts' ? this.user_scripts : this.backing_scripts)) || this.scripts
-      const editor = (script_type && (script_type === 'user_scripts' ? this.userScriptEditor : this.backingScriptEditor)) || this.editor
+      const scripts = (script_type && (script_type === 'test_scripts' ? this.test_scripts : this.test_libraries)) || this.scripts
+      const editor = (script_type && (script_type === 'test_scripts' ? this.userScriptEditor : this.backingScriptEditor)) || this.editor
 
       const path = []
       this.getScriptPath(path, scripts, this.currentNode.data)
@@ -244,7 +241,7 @@ export default {
       if (this.lastFile === this.editor.getValue()) {
         return
       }
-      if (this.tabName === 'backing_scripts' && this.lastNode !== this.currentNode) {
+      if (this.tabName === 'test_libraries' && this.lastNode !== this.currentNode) {
         this.lastNode = this.currentNode
         return
       }
@@ -395,9 +392,9 @@ export default {
       const match = /New File\(?(\d*)\)?\.(md|py)/
       const max_number = this.newFileNumber(files, match)
       if (max_number !== -1) {
-        return `New File(${max_number + 1}).${this.tabName === 'user_scripts' ? 'md' : 'py'}`
+        return `New File(${max_number + 1}).${this.tabName === 'test_scripts' ? 'md' : 'py'}`
       }
-      return `New File.${this.tabName === 'user_scripts' ? 'md' : 'py'}`
+      return `New File.${this.tabName === 'test_scripts' ? 'md' : 'py'}`
     },
     newFolderName(files) {
       const match = /New Folder\(?(\d*)\)?/
