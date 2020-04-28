@@ -115,7 +115,11 @@ export default {
     },
     organization_team_id() {
       if (this.organization_team) {
-        return 'Organization ID: ' + this.organization_team.join('/')
+        const [organization, team] = this.organization_team
+        if (team) {
+          return 'Team ID: ' + team
+        }
+        return 'Organization ID: ' + organization
       } else {
         return ''
       }

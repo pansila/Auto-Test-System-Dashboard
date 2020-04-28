@@ -88,7 +88,14 @@
       </el-form-item>
     </el-form>
     <el-dialog title="Test Status" :visible.sync="testStatusDialogVisible" width="760px">
-      <div ref="testsuite_status" />
+      <el-tabs @tab-click="tab_click">
+        <el-tab-pane label="Test Report">
+          <div ref="robot_log" />
+        </el-tab-pane>
+        <el-tab-pane label="Test Log">
+          <div ref="runtime_log" />
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
   </div>
 </template>
@@ -118,8 +125,10 @@ export default {
       coworkers: [],
       listLoading: false,
       resource_id: undefined,
-      term: undefined,
-      termBuffer: '',
+      robotlog_term: undefined,
+      runtimelog_term: undefined,
+      termBuffer_robotlog: '',
+      termBuffer_runtimelog: '',
       socket: undefined,
       testStatusDialogVisible: false,
       socketURL: process.env.NODE_ENV === 'development' ? 'ws://127.0.0.1:5000' : '',
@@ -224,18 +233,33 @@ export default {
     join_room(task_id) {
       if (!this.organization_team) return
       const [organization, team] = this.organization_team
-      if (this.term) this.term.reset()
-      this.socket.off('console log')
-      this.socket.on('console log', (data) => {
+      if (this.robotlog_term) this.robotlog_term.reset()
+      if (this.runtimelog_term) this.runtimelog_term.reset()
+      this.socket.off('test report')
+      this.socket.on('test report', (data) => {
         if (task_id === data.task_id) {
-          if (this.term) {
-            if (this.termBuffer) {
-              this.term.write(this.termBuffer)
-              this.termBuffer = null
+          if (this.robotlog_term) {
+            if (this.termBuffer_robotlog) {
+              this.robotlog_term.write(this.termBuffer_robotlog)
+              this.termBuffer_robotlog = null
             }
-            this.term.write(data.message)
+            this.robotlog_term.write(data.message)
           } else {
-            this.termBuffer += data.message
+            this.termBuffer_robotlog += data.message
+          }
+        }
+      })
+      this.socket.off('test log')
+      this.socket.on('test log', (data) => {
+        if (task_id === data.task_id) {
+          if (this.runtimelog_term) {
+            if (this.termBuffer_runtimelog) {
+              this.runtimelog_term.write(this.termBuffer_runtimelog)
+              this.termBuffer_runtimelog = null
+            }
+            this.runtimelog_term.write(data.message)
+          } else {
+            this.termBuffer_runtimelog += data.message
           }
         }
       })
@@ -254,23 +278,37 @@ export default {
           organization,
           team
         })
-        this.socket.off('console log')
+        this.socket.off('test log')
+        this.socket.off('test report')
       }
     },
-    initTerminal(task_id) {
-      this.task_id = task_id
-      if (this.term) {
-        this.join_room(task_id)
-        return
+    tab_click() {
+      this.$nextTick(() => this.initTerminal2())
+    },
+    initTerminal1() {
+      if (this.robotlog_term) {
+        this.join_room(this.task_id)
+      } else {
+        const container1 = this.$refs['robot_log']
+        this.robotlog_term = new Terminal()
+        const fitAddon1 = new FitAddon()
+        this.robotlog_term.loadAddon(fitAddon1)
+        this.robotlog_term.open(container1)
+        fitAddon1.fit()
+        this.robotlog_term._initialized = true
+        this.join_room(this.task_id)
       }
-      const terminalContainer = this.$refs['testsuite_status']
-      this.term = new Terminal()
-      const fitAddon = new FitAddon()
-      this.term.loadAddon(fitAddon)
-      this.term.open(terminalContainer)
-      fitAddon.fit()
-      this.term._initialized = true
-      this.join_room(task_id)
+    },
+    initTerminal2() {
+      if (!this.runtimelog_term) {
+        const container2 = this.$refs['runtime_log']
+        this.runtimelog_term = new Terminal()
+        const fitAddon2 = new FitAddon()
+        this.runtimelog_term.loadAddon(fitAddon2)
+        this.runtimelog_term.open(container2)
+        fitAddon2.fit()
+        this.runtimelog_term._initialized = true
+      }
     },
     async onSubmit() {
       /** upload files **/
@@ -344,12 +382,12 @@ export default {
         type: 'success'
       })
       this.resource_id = undefined
-      if (this.term) {
-        this.term.reset()
-      }
+      this.robotlog_term && this.robotlog_term.reset()
+      this.runtimelog_term && this.runtimelog_term.reset()
       if (res.data.running.length > 0) {
         this.testStatusDialogVisible = true
-        this.$nextTick(() => this.initTerminal(res.data.running[0]))
+        this.task_id = res.data.running[0]
+        this.$nextTick(() => this.initTerminal1())
       } else {
         this.$store.dispatch('settings/changeSetting', {
           key: 'taskqueue_update',

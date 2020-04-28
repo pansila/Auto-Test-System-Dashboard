@@ -52,6 +52,11 @@
             {{ scope.row.summary }}
           </template>
         </el-table-column>
+        <el-table-column label="Latest version">
+          <template slot-scope="scope">
+            {{ scope.row.versions[0] }}
+          </template>
+        </el-table-column>
         <el-table-column label="Stars" min-width="50">
           <template slot-scope="scope">
             <svg-icon v-for="n in +scope.row.stars" :key="n" icon-class="star" />
@@ -60,6 +65,11 @@
         <el-table-column label="Downloads">
           <template slot-scope="scope">
             {{ scope.row.download_times }}
+          </template>
+        </el-table-column>
+        <el-table-column label="Upload Date">
+          <template slot-scope="scope">
+            {{ scope.row.upload_date | dateFilter }}
           </template>
         </el-table-column>
       </el-table>
@@ -127,6 +137,10 @@ export default {
   filters: {
     replaceSpace(data) {
       return data.replace(/-/g, ' ').replace(/_/g, ' ')
+    },
+    dateFilter(time) {
+      const date = new Date(time)
+      return date.toLocaleString()
     }
   },
   data() {
