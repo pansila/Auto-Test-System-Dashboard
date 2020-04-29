@@ -198,20 +198,10 @@ export default {
   },
   watch: {
     async organization_team(newValue, oldValue) {
-      const [organization_n, team_n] = newValue
-      const [organization_o, team_o] = oldValue || [undefined, undefined]
       await this.fetchData()
       if (this.socket) {
-        this.socket.emit('leave', {
-          'X-Token': getToken(),
-          organization: organization_o,
-          team: team_o
-        })
-        this.socket.emit('join', {
-          'X-Token': getToken(),
-          organization: organization_n,
-          team: team_n
-        })
+        oldValue && this.leave_room(oldValue)
+        this.join_room()
       }
     }
   },
@@ -222,7 +212,7 @@ export default {
       this.leave_room()
     })
     this.socket.on('connect', () => {
-      this.join_room(this.task_id)
+      this.join_room()
     })
   },
   destroyed() {
@@ -233,36 +223,41 @@ export default {
     join_room(task_id) {
       if (!this.organization_team) return
       const [organization, team] = this.organization_team
-      if (this.robotlog_term) this.robotlog_term.reset()
-      if (this.runtimelog_term) this.runtimelog_term.reset()
-      this.socket.off('test report')
-      this.socket.on('test report', (data) => {
-        if (task_id === data.task_id) {
-          if (this.robotlog_term) {
-            if (this.termBuffer_robotlog) {
-              this.robotlog_term.write(this.termBuffer_robotlog)
-              this.termBuffer_robotlog = null
+
+      if (task_id) {
+        if (this.robotlog_term) this.robotlog_term.reset()
+        if (this.runtimelog_term) this.runtimelog_term.reset()
+
+        this.socket.off('test report')
+        this.socket.on('test report', (data) => {
+          if (task_id === data.task_id) {
+            if (this.robotlog_term) {
+              if (this.termBuffer_robotlog) {
+                this.robotlog_term.write(this.termBuffer_robotlog)
+                this.termBuffer_robotlog = null
+              }
+              this.robotlog_term.write(data.message)
+            } else {
+              this.termBuffer_robotlog += data.message
             }
-            this.robotlog_term.write(data.message)
-          } else {
-            this.termBuffer_robotlog += data.message
           }
-        }
-      })
-      this.socket.off('test log')
-      this.socket.on('test log', (data) => {
-        if (task_id === data.task_id) {
-          if (this.runtimelog_term) {
-            if (this.termBuffer_runtimelog) {
-              this.runtimelog_term.write(this.termBuffer_runtimelog)
-              this.termBuffer_runtimelog = null
+        })
+        this.socket.off('test log')
+        this.socket.on('test log', (data) => {
+          if (task_id === data.task_id) {
+            if (this.runtimelog_term) {
+              if (this.termBuffer_runtimelog) {
+                this.runtimelog_term.write(this.termBuffer_runtimelog)
+                this.termBuffer_runtimelog = null
+              }
+              this.runtimelog_term.write(data.message)
+            } else {
+              this.termBuffer_runtimelog += data.message
             }
-            this.runtimelog_term.write(data.message)
-          } else {
-            this.termBuffer_runtimelog += data.message
           }
-        }
-      })
+        })
+      }
+
       this.socket.emit('join', {
         'X-Token': getToken(),
         organization,
@@ -270,17 +265,15 @@ export default {
         task_id
       })
     },
-    leave_room() {
-      if (this.organization_team) {
-        const [organization, team] = this.organization_team
-        this.socket.emit('leave', {
-          'X-Token': getToken(),
-          organization,
-          team
-        })
-        this.socket.off('test log')
-        this.socket.off('test report')
-      }
+    leave_room(organization_team) {
+      const [organization, team] = organization_team || this.organization_team || [undefined, undefined]
+      this.socket.emit('leave', {
+        'X-Token': getToken(),
+        organization,
+        team
+      })
+      this.socket.off('test log')
+      this.socket.off('test report')
     },
     tab_click() {
       this.$nextTick(() => this.initTerminal2())
@@ -312,6 +305,7 @@ export default {
     },
     async onSubmit() {
       /** upload files **/
+      if (this.tests.length === 0) return
       const [organization, team] = this.organization_team
       for (const idx in this.fileList) {
         const file = this.fileList[idx]

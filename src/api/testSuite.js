@@ -269,3 +269,12 @@ export function getPackageInfo(query) {
     params: query
   })
 }
+
+export function downloadFile(params) {
+  return request({
+    url: '/setting/download',
+    method: 'get',
+    responseType: 'blob',
+    params
+  })
+}

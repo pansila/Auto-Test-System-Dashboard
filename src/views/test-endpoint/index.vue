@@ -1,18 +1,25 @@
 <template>
   <div class="page-container">
     <div class="filter-container">
-      <el-row :gutter="10" type="flex">
+      <el-row :gutter="10" type="flex" justify="space-between">
         <el-col style="width: auto;">
-          <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" />
+          <el-row :gutter="10" type="flex">
+            <el-col style="width: auto;">
+              <el-input v-model="listQuery.title" placeholder="title" style="width: 200px;" class="filter-item" />
+            </el-col>
+            <el-col style="width: auto;">
+              <el-button v-waves class="filter-item" icon="el-icon-search" @click="handleFilter">{{ 'search' }}</el-button>
+            </el-col>
+            <el-col style="width: auto;">
+              <el-checkbox-group v-model="filterGroup">
+                <el-checkbox-button key="Unauthorized" label="Unauthorized">Unauthorized</el-checkbox-button>
+                <el-checkbox-button key="Forbidden" label="Forbidden">Forbidden</el-checkbox-button>
+              </el-checkbox-group>
+            </el-col>
+          </el-row>
         </el-col>
         <el-col style="width: auto;">
-          <el-button v-waves class="filter-item" icon="el-icon-search" @click="handleFilter">{{ 'search' }}</el-button>
-        </el-col>
-        <el-col style="width: auto;">
-          <el-checkbox-group v-model="filterGroup">
-            <el-checkbox-button key="Unauthorized" label="Unauthorized">Unauthorized</el-checkbox-button>
-            <el-checkbox-button key="Forbidden" label="Forbidden">Forbidden</el-checkbox-button>
-          </el-checkbox-group>
+          <el-button @click="onDownloadEndpoint">{{ 'Download Endpint' }}</el-button>
         </el-col>
       </el-row>
     </div>
@@ -91,9 +98,10 @@
 <script>
 import { mapGetters } from 'vuex'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
-import { testEndpoint, updateEndpoint, deleteEndpoint, fetchTests, fetchEndpoints, authorizeEndpoint, forbidEndpoint } from '@/api/testSuite'
+import { testEndpoint, updateEndpoint, deleteEndpoint, fetchTests, fetchEndpoints, authorizeEndpoint, forbidEndpoint, downloadFile } from '@/api/testSuite'
 import waves from '@/directive/waves' // Waves directive
 import { setTimeout } from 'timers'
+import fileDownload from 'js-file-download'
 
 export default {
   name: 'TestReport',
@@ -293,6 +301,11 @@ export default {
         console.error(error)
       }
       this.listFormLoading = false
+    },
+    async onDownloadEndpoint() {
+      const random_num = Math.random().toString(10).substring(2) // bypass the web cache
+      const resp = await downloadFile({ file: 'get-endpoint.py', random_num })
+      fileDownload(resp, 'get-endpoint.py')
     }
   }
 }

@@ -43,7 +43,14 @@
       </el-table>
     </el-dialog>
     <el-dialog title="Test Status" :visible.sync="testStatusDialogVisible" width="760px">
-      <div ref="testsuite_status" />
+      <el-tabs @tab-click="tab_click">
+        <el-tab-pane label="Test Report">
+          <div ref="robot_log" />
+        </el-tab-pane>
+        <el-tab-pane label="Test Log">
+          <div ref="runtime_log" />
+        </el-tab-pane>
+      </el-tabs>
     </el-dialog>
   </div>
 </template>
@@ -82,7 +89,10 @@ export default {
       },
       list: [],
       dialogTableVisible: false,
-      term: undefined,
+      robotlog_term: undefined,
+      runtimelog_term: undefined,
+      termBuffer_robotlog: '',
+      termBuffer_runtimelog: '',
       socket: undefined,
       testStatusDialogVisible: false,
       socketURL: process.env.NODE_ENV === 'development' ? 'ws://127.0.0.1:5000' : ''
@@ -96,20 +106,10 @@ export default {
   },
   watch: {
     async organization_team(newValue, oldValue) {
-      const [organization_n, team_n] = newValue
-      const [organization_o, team_o] = oldValue || [undefined, undefined]
       await this.fetchQueuingTestList()
       if (this.socket) {
-        this.socket.emit('leave', {
-          'X-Token': getToken(),
-          organization: organization_o,
-          team: team_o
-        })
-        this.socket.emit('join', {
-          'X-Token': getToken(),
-          organization: organization_n,
-          team: team_n
-        })
+        oldValue && this.leave_room(oldValue)
+        this.join_room()
       }
     },
     async taskqueue_update(newVal) {
@@ -134,14 +134,37 @@ export default {
   methods: {
     enter_room(task_id) {
       if (!this.organization_team) return
-      this.socket.on('console log', (data) => {
-        if (this.term) {
-          if (task_id === data.task_id) {
-            this.term.write(data.message)
+      const [organization, team] = this.organization_team
+      this.robotlog_term && this.robotlog_term.reset()
+      this.runtimelog_term && this.runtimelog_term.reset()
+      this.socket.off('test report')
+      this.socket.on('test report', (data) => {
+        if (task_id === data.task_id) {
+          if (this.robotlog_term) {
+            if (this.termBuffer_robotlog) {
+              this.robotlog_term.write(this.termBuffer_robotlog)
+              this.termBuffer_robotlog = ''
+            }
+            this.robotlog_term.write(data.message)
+          } else {
+            this.termBuffer_robotlog += data.message
           }
         }
       })
-      const [organization, team] = this.organization_team
+      this.socket.off('test log')
+      this.socket.on('test log', (data) => {
+        if (task_id === data.task_id) {
+          if (this.runtimelog_term) {
+            if (this.termBuffer_runtimelog) {
+              this.runtimelog_term.write(this.termBuffer_runtimelog)
+              this.termBuffer_runtimelog = ''
+            }
+            this.runtimelog_term.write(data.message)
+          } else {
+            this.termBuffer_runtimelog += data.message
+          }
+        }
+      })
       this.socket.emit('enter', {
         'X-Token': getToken(),
         organization,
@@ -164,40 +187,53 @@ export default {
         team
       })
     },
-    leave_room() {
-      if (this.organization_team) {
-        const [organization, team] = this.organization_team
-        this.socket.emit('leave', {
-          'X-Token': getToken(),
-          organization,
-          team
-        })
-        this.socket.off('console log')
-      }
+    leave_room(organization_team) {
+      const [organization, team] = organization_team || this.organization_team
+      this.socket.emit('leave', {
+        'X-Token': getToken(),
+        organization,
+        team
+      })
+      this.socket.off('task finished')
+      this.socket.off('task started')
+      this.socket.off('test report')
+      this.socket.off('test log')
     },
-    initTerminal(task_id) {
-      if (this.term) {
+    tab_click() {
+      this.$nextTick(() => this.initTerminal2())
+    },
+    initTerminal1(task_id) {
+      if (this.robotlog_term) {
         this.enter_room(task_id)
         return
       }
-      const terminalContainer = this.$refs['testsuite_status']
-      this.term = new Terminal()
+      const terminalContainer = this.$refs['robot_log']
+      this.robotlog_term = new Terminal()
       const fitAddon = new FitAddon()
-      this.term.loadAddon(fitAddon)
-      this.term.open(terminalContainer)
+      this.robotlog_term.loadAddon(fitAddon)
+      this.robotlog_term.open(terminalContainer)
       fitAddon.fit()
-      this.term._initialized = true
+      this.robotlog_term._initialized = true
 
       this.enter_room(task_id)
     },
+    initTerminal2() {
+      if (!this.runtimelog_term) {
+        const container = this.$refs['runtime_log']
+        this.runtimelog_term = new Terminal()
+        const fitAddon = new FitAddon()
+        this.runtimelog_term.loadAddon(fitAddon)
+        this.runtimelog_term.open(container)
+        fitAddon.fit()
+        this.runtimelog_term._initialized = true
+      }
+    },
     testClicked(row) {
       if (row.status !== 'Running') return
-      this.socket.off('console log')
-      if (this.term) {
-        this.term.reset()
-      }
+      this.socket.off('test report')
+      this.robotlog_term && this.robotlog_term.reset()
       this.testStatusDialogVisible = true
-      this.$nextTick(() => this.initTerminal(row.task_id))
+      this.$nextTick(() => this.initTerminal1(row.task_id))
     },
     async fetchQueuingTestList() {
       if (!this.organization_team) return

@@ -125,6 +125,7 @@
 
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+import { MessageBox } from 'element-ui'
 import { mapGetters } from 'vuex'
 import { fetchPackages, uploadPackage, updatePackage, getPackageInfo, installPackage, uninstallPackage, removePackage } from '@/api/testSuite'
 import Viewer from 'tui-editor/dist/tui-editor-Viewer'
@@ -315,6 +316,15 @@ export default {
       this.viewer.setValue(ret.data.description)
     },
     async install() {
+      try {
+        await MessageBox.confirm('Installed package will overwrite what you installed before. Do you confirm to proceed', 'Warning', {
+          confirmButtonText: 'OK',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        })
+      } catch (error) {
+        return
+      }
       if (!this.current_package) return
       const [organization, team] = this.organization_team || [null, null]
       const data = { organization, team,
