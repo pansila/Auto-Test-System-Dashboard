@@ -39,11 +39,6 @@
         />
       </a>
 
-      <div v-if="lang === 'zh'" class="drawer-item">
-        <span>菜单支持拼音搜索</span>
-        <el-switch v-model="supportPinyinSearch" class="drawer-switch" />
-      </div>
-
     </div>
   </div>
 </template>

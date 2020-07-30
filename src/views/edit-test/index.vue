@@ -1,51 +1,80 @@
 <template>
   <div style="margin: 30px">
-    <div class="filter-container">
-      <el-row type="flex" justify="start" :gutter="8">
-        <el-col style="width: auto;">
-          <el-button class="filter-item" icon="el-icon-plus" @click="onNewFile">New File</el-button>
-        </el-col>
-        <el-col style="width: auto;">
-          <el-button class="filter-item" icon="el-icon-plus" @click="onNewFolder">New Folder</el-button>
-        </el-col>
-        <el-col style="width: auto;">
-          <el-upload
-            class="upload-demo"
-            action="http://abc.com"
-            multiple
-            :auto-upload="false"
-            :file-list="fileList"
-            :on-change="onUploadFileChange"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-          >
-            <el-button type="primary">Upload Scripts</el-button>
-          </el-upload>
+    <!-- <div class="filter-container">
+      <el-row type="flex" justify="space-between" :gutter="8">
+        <el-col :span="6">
+          <el-select v-model="testSuiteIdx" placeholder="please select a test suite to edit" style="width: 100%">
+            <el-option v-for="(t, i) in testSuiteList" :key="t" :label="t" :value="i" />
+          </el-select>
         </el-col>
       </el-row>
-    </div>
-    <el-tabs v-model="tabName" type="border-card" tab-click="onTabClick">
-      <el-tab-pane key="1" label="Test Scripts" name="test_scripts">
-        <el-container style="max-height: 200px; border: 1px solid #eee">
-          <el-aside width="100%" style="padding: 0">
-            <keep-alive>
-              <el-tree :data="test_scripts || []" :render-content="renderContent" :highlight-current="true" @node-click="onClickScript" />
-            </keep-alive>
-          </el-aside>
-        </el-container>
-      </el-tab-pane>
-      <el-tab-pane key="2" label="Test Libraries" name="test_libraries">
-        <el-container style="max-height: 200px; border: 1px solid #eee">
-          <el-aside width="100%" style="padding: 0">
-            <keep-alive>
-              <el-tree :data="test_libraries || []" :render-content="renderContent" @node-click="onClickScript" />
-            </keep-alive>
-          </el-aside>
-        </el-container>
-      </el-tab-pane>
-    </el-tabs>
-    <div v-show="tabName === 'test_scripts'" :id="userScriptID" style="margin-top: 30px" />
-    <div v-show="tabName === 'test_libraries'" :id="backingScriptID" style="margin-top: 30px; width: 100%; height: 500px;" />
+    </div> -->
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-card>
+          <div slot="header">
+            <span>Test Scripts</span>
+            <el-button-group style="float: right;">
+              <el-button size="small" @click="onNewFile">New File</el-button>
+              <el-button size="small" @click="onNewFolder">New Folder</el-button>
+              <el-upload
+                style="float: right"
+                class="upload-demo"
+                action="http://abc.com"
+                multiple
+                :auto-upload="false"
+                :file-list="fileList"
+                :on-change="onUploadFileChange"
+                :on-remove="handleRemove"
+                :before-remove="beforeRemove"
+              >
+                <el-button size="small">Upload Scripts</el-button>
+              </el-upload>
+            </el-button-group>
+          </div>
+          <el-container style="max-height: 200px; border: 1px solid #eee">
+            <el-aside width="100%" style="padding: 0">
+              <keep-alive>
+                <el-tree :data="testScripts || []" :render-content="renderContentForScript" :highlight-current="true" @node-click="onClickScript" />
+              </keep-alive>
+            </el-aside>
+          </el-container>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card>
+          <div slot="header">
+            <span>Test Libraries</span>
+            <el-button-group style="float: right;">
+              <el-button size="small">New File</el-button>
+              <el-button size="small">New Folder</el-button>
+              <el-upload
+                style="float: right"
+                class="upload-demo"
+                action="http://abc.com"
+                multiple
+                :auto-upload="false"
+                :file-list="fileList"
+                :on-change="onUploadFileChange"
+                :on-remove="handleRemove"
+                :before-remove="beforeRemove"
+              >
+                <el-button size="small">Upload Scripts</el-button>
+              </el-upload>
+            </el-button-group>
+          </div>
+          <el-container style="max-height: 200px; border: 1px solid #eee">
+            <el-aside width="100%" style="padding: 0">
+              <keep-alive>
+                <el-tree :data="testLibraries || []" :render-content="renderContentForLibrary" @node-click="onClickScript" />
+              </keep-alive>
+            </el-aside>
+          </el-container>
+        </el-card>
+      </el-col>
+    </el-row>
+    <div v-show="currentEditType === 'test_scripts'" :id="userScriptID" style="margin-top: 30px" />
+    <div v-show="currentEditType === 'test_libraries'" :id="backingScriptID" style="margin-top: 30px; width: 100%; height: 500px;" />
     <el-dialog title="Rename" :visible.sync="dialogRenameVisible">
       <el-form :model="form">
         <el-form-item label="New File Name" label-width="120px">
@@ -126,11 +155,13 @@ export default {
   },
   data() {
     return {
+      tests: [],
+      testSuiteIdx: null,
       userScriptEditor: null,
       backingScriptEditor: null,
-      test_scripts: null,
-      test_libraries: null,
-      tabName: 'test_scripts',
+      testScripts: null,
+      testLibraries: null,
+      currentEditType: 'test_scripts',
       mouseover: 0,
       currentNode: null,
       lastNode: null,
@@ -140,7 +171,10 @@ export default {
       uploadURL: process.env.BASE_API + '/script/upload/',
       form: {
         name: null
-      }
+      },
+      topScriptNode: null,
+      topLibraryNode: null,
+      switchingFile: false
     }
   },
   computed: {
@@ -155,10 +189,30 @@ export default {
       return options
     },
     editor() {
-      return this.tabName === 'test_scripts' ? this.userScriptEditor : this.backingScriptEditor
+      return this.currentEditType === 'test_scripts' ? this.userScriptEditor : this.backingScriptEditor
     },
     scripts() {
-      return this.tabName === 'test_scripts' ? this.test_scripts : this.test_libraries
+      return this.currentEditType === 'test_scripts' ? this.testScripts : this.testLibraries
+    },
+    testSuiteList() {
+      const tss = []
+      for (let i = 0; i < this.tests.length; i++) {
+        if (i === 0) {
+          tss.push(this.tests[i].test_suite)
+          continue
+        }
+        let j
+        for (j = 0; j < i; j++) {
+          if (this.tests[i].test_suite === this.tests[j].test_suite) {
+            tss.push(this.tests[i].test_suite + ` (${this.tests[i].path})`)
+            break
+          }
+        }
+        if (j === i) {
+          tss.push(this.tests[i].test_suite)
+        }
+      }
+      return tss
     }
   },
   watch: {
@@ -177,19 +231,14 @@ export default {
     mode(newValue) {
       this.userScriptEditor.changeMode(newValue)
     },
-    async tabName(newVal, preVal) {
-      await this.updateScriptContent(preVal)
-    },
     async organization_team(newVal) {
-      await this.updateScriptContent()
-      await this.fetchScriptList()
+      await this.fetchData()
       this.currentNode = null
       this.editor.setValue('')
     }
   },
   async created() {
-    await this.updateScriptContent()
-    await this.fetchScriptList()
+    await this.fetchData()
   },
   mounted() {
     this.initEditor()
@@ -198,33 +247,42 @@ export default {
     this.destroyEditor()
   },
   methods: {
+    async fetchData() {
+      // if (!this.organization_team) return
+      // const [organization, team] = this.organization_team
+      // const tests = await fetchTests({ organization, team })
+      // if (!tests) {
+      //   console.error('no tests found')
+      // }
+      // this.tests = tests
+      await this.updateScriptContent()
+      await this.fetchScriptList()
+    },
     async fetchScriptList() {
       if (!this.organization_team && !this.organizations) return
       const [organization, team] = this.organization_team
       const data = await fetchScripts({ organization, team })
-      this.test_scripts = data.test_scripts.children
-      this.test_libraries = data.test_libraries.children
+      this.testScripts = data.test_scripts.children
+      this.testLibraries = data.test_libraries.children
     },
-    async updateScriptContent(script_type) {
+    async updateScriptContent(editor, file_path) {
       if (!this.organization_team) return
       const [organization, team] = this.organization_team
+      editor = editor || this.editor
 
-      if (!this.currentNode) {
+      if (!this.currentNode || this.currentNode.data._flag !== DOC_STATE_MODIFING) {
         return
       }
-      if (this.currentNode.data._flag !== DOC_STATE_MODIFING) {
-        return
+
+      if (!file_path) {
+        const path = []
+        this.getScriptPath(path, this.scripts, this.currentNode.data)
+        file_path = path.join('/')
       }
-
-      const scripts = (script_type && (script_type === 'test_scripts' ? this.test_scripts : this.test_libraries)) || this.scripts
-      const editor = (script_type && (script_type === 'test_scripts' ? this.userScriptEditor : this.backingScriptEditor)) || this.editor
-
-      const path = []
-      this.getScriptPath(path, scripts, this.currentNode.data)
 
       await updateScript({
-        file: path.join('/'),
-        script_type: script_type || this.tabName,
+        file: file_path,
+        script_type: this.currentEditType,
         content: editor.getValue(),
         organization,
         team
@@ -233,21 +291,25 @@ export default {
         this.currentNode.data._flag = DOC_STATE_MODIFIED
       }
     },
-    updateScriptContent_limited: debounce(function() { this.updateScriptContent() }, 2000),
     onEditorChange() {
       if (!this.currentNode) {
+        return
+      }
+      if (this.switchingFile) {
+        this.switchingFile = false
+        this.lastFile = this.editor.getValue()
         return
       }
       if (this.lastFile === this.editor.getValue()) {
         return
       }
-      if (this.tabName === 'test_libraries' && this.lastNode !== this.currentNode) {
+      if (this.currentEditType === 'test_libraries' && this.lastNode !== this.currentNode) {
         this.lastNode = this.currentNode
         return
       }
       this.currentNode.data._flag = DOC_STATE_MODIFING
 
-      this.updateScriptContent_limited()
+      debounce(async() => { await this.updateScriptContent() }, 2000)()
       this.lastFile = this.editor.getValue()
     },
     initEditor() {
@@ -287,7 +349,14 @@ export default {
     onMouseOut() {
       this.mouseover = 0
     },
-    renderContent(h, { node, data, store }) {
+    renderContent(h, type, { node, data, store }) {
+      if (node.parent && !node.parent.parent) {
+        if (type === 0 && !this.topScriptNode) {
+          this.topScriptNode = node
+        } else if (type === 1 && !this.topLibraryNode) {
+          this.topLibraryNode = node
+        }
+      }
       return (
         <span class='custom-tree-node' onMouseover={() => this.onMouseOver(data)} onMouseout={() => this.onMouseOut()}>
           <span>{node.label}</span>
@@ -298,6 +367,19 @@ export default {
           </span>
         </span>
       )
+    },
+    renderContentForScript(h, { node, data, store }) {
+      return this.renderContent(h, 0, { node, data, store })
+    },
+    renderContentForLibrary(h, { node, data, store }) {
+      return this.renderContent(h, 1, { node, data, store })
+    },
+    setCurrentEditType(data) {
+      if (data.label.endsWith('.md') || data.label.endsWith('.robot')) {
+        this.currentEditType = 'test_scripts'
+      } else {
+        this.currentEditType = 'test_libraries'
+      }
     },
     getScriptPath(path, tree, node) {
       return tree.every(e => {
@@ -324,6 +406,12 @@ export default {
       const [organization, team] = this.organization_team
 
       this.lastNode = this.currentNode
+      if (this.lastNode !== node) {
+        this.switchingFile = true
+      } else if (this.lastNode && node) {
+        this.currentNode = node
+        return
+      }
 
       if (this.currentNode && this.currentNode.data._flag === DOC_STATE_MODIFING) {
         await this.updateScriptContent()
@@ -332,18 +420,20 @@ export default {
       this.currentNode = node
       if (data._flag === DOC_STATE_CREATED) {
         this.editor.setValue('')
+        this.lastFile = null
         return
       }
       if (data.type !== 'file') return
+      this.setCurrentEditType(data)
 
       const path = []
       this.getScriptPath(path, this.scripts, data)
 
-      const no_cache = data._flag === DOC_STATE_MODIFIED || !data._flag
+      const no_cache = !data._flag || data._flag === DOC_STATE_MODIFIED
       const res_data = await getScript(
         {
           file: path.join('/'),
-          script_type: this.tabName,
+          script_type: this.currentEditType,
           organization,
           team
         },
@@ -355,10 +445,7 @@ export default {
       if (this.editor.moveCursorTo) this.editor.moveCursorTo(0, 0)
       if (this.editor.moveCursorToStart) this.editor.moveCursorToStart()
 
-      if (!this.lastFile) {
-        this.lastFile = this.editor.getValue()
-        return
-      }
+      this.lastFile = this.editor.getValue()
     },
     rename(data) {
       this.form.name = data.label
@@ -371,7 +458,7 @@ export default {
       this.getScriptPath(path, this.scripts, this.currentNode.data)
 
       this.currentNode.data.label = this.form.name
-      updateScript({ file: path.join('/'), new_name: this.form.name, script_type: this.tabName, organization, team })
+      updateScript({ file: path.join('/'), new_name: this.form.name, script_type: this.currentEditType, organization, team })
       this.dialogRenameVisible = false
     },
     newFileNumber(files, match) {
@@ -392,9 +479,9 @@ export default {
       const match = /New File\(?(\d*)\)?\.(md|py)/
       const max_number = this.newFileNumber(files, match)
       if (max_number !== -1) {
-        return `New File(${max_number + 1}).${this.tabName === 'test_scripts' ? 'md' : 'py'}`
+        return `New File(${max_number + 1}).${this.currentEditType === 'test_scripts' ? 'md' : 'py'}`
       }
-      return `New File.${this.tabName === 'test_scripts' ? 'md' : 'py'}`
+      return `New File.${this.currentEditType === 'test_scripts' ? 'md' : 'py'}`
     },
     newFolderName(files) {
       const match = /New Folder\(?(\d*)\)?/
@@ -417,7 +504,7 @@ export default {
         const newNode = node.childNodes[node.childNodes.length - 1]
         await this.onClickScript(newNode.data, newNode)
         newNode.data._flag = DOC_STATE_MODIFING
-        this.updateScriptContent()
+        await this.updateScriptContent()
       })
     },
     data2node(nodeTree, data) {
@@ -436,32 +523,37 @@ export default {
     },
     async remove(node, data) {
       if (!this.organization_team) return
-      const [organization, team] = this.organization_team
-      const path = []
-      this.getScriptPath(path, this.scripts, data)
+      this.$confirm('Confirm to remove the file?', 'Warning', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(async() => {
+        const [organization, team] = this.organization_team
+        const path = []
+        this.getScriptPath(path, this.scripts, data)
 
-      const parent = node.parent
-      const children = parent.data.children || parent.data
-      const index = children.findIndex(d => d.$treeNodeId === data.$treeNodeId)
-      children.splice(index, 1)
-      this.currentNode = null
+        const parent = node.parent
+        const children = parent.data.children || parent.data
+        const index = children.findIndex(d => d.$treeNodeId === data.$treeNodeId)
+        children.splice(index, 1)
+        this.currentNode = null
 
-      await removeScript({
-        file: path.join('/'),
-        script_type: this.tabName,
-        organization,
-        team
+        await removeScript({
+          file: path.join('/'),
+          script_type: this.currentEditType,
+          organization,
+          team
+        })
+
+        const new_data = children[index] || children[index - 1] || parent.data
+        const new_node = this.data2node(parent.childNodes, new_data)
+
+        await this.onClickScript(new_data, new_node)
       })
-
-      const new_data = children[index] || children[index - 1] || parent.data
-      const new_node = this.data2node(parent.childNodes, new_data)
-
-      await this.onClickScript(new_data, new_node)
     },
     onNewFile() {
       if (!this.currentNode) {
-        this.$message({ type: 'warning', message: 'Please specify a position to add' })
-        return
+        this.currentNode = this.topScriptNode
       }
       const data = this.currentNode.data
       const parent = this.currentNode.parent
@@ -473,13 +565,12 @@ export default {
         const newNode = parent.childNodes[index + 1]
         await this.onClickScript(newNode.data, newNode)
         newNode.data._flag = DOC_STATE_MODIFING
-        this.updateScriptContent()
+        await this.updateScriptContent()
       })
     },
     onNewFolder() {
       if (!this.currentNode) {
-        this.$message({ type: 'warning', message: 'Please specify a position to add' })
-        return
+        this.currentNode = this.topScriptNode
       }
       const data = this.currentNode.data
       const parent = this.currentNode.parent
@@ -491,7 +582,7 @@ export default {
         const newNode = parent.childNodes[index + 1]
         await this.onClickScript(newNode.data, newNode)
         newNode.data._flag = DOC_STATE_MODIFING
-        this.updateScriptContent()
+        await this.updateScriptContent()
       })
     },
     async onTabClick() {
@@ -511,7 +602,7 @@ export default {
       const [organization, team] = this.organization_team
 
       const formData = new FormData()
-      formData.append('script_type', this.tabName)
+      formData.append('script_type', this.currentEditType)
       formData.append('organization', organization)
       formData.append('team', team)
       this.fileList.forEach(file => {
