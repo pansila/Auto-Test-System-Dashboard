@@ -238,6 +238,33 @@ export default {
     test_suite: '测试套件',
     run_date: '运行日期',
     tester: '操作人员',
-    status: '结果'
+    status: '结果',
+    all_test_cases: '所有测试用例',
+    name: '名字',
+    value: '值'
+  },
+  task: {
+    test_suite_placeholder: '请选择一个测试套件',
+    test_endpoint_placeholder: '请选择运行测试的节点',
+    parallization: '多任务模式',
+    parallel_any: '任何一个',
+    parallel_any_tip: '在任何一个首先空闲的节点上执行测试',
+    parallel_all: '所有节点',
+    parallel_all_tip: '在所有节点上执行测试',
+    priority: '任务优先级',
+    priority_low: '低',
+    priority_medium: '中',
+    priority_high: '高',
+    test_cases: '测试用例',
+    variables: '测试变量',
+    upload: '上传',
+    upload_files: '文件上传',
+    tester: '测试人员',
+    cc: '通知抄送',
+    cc_placeholder: '通知其他人员',
+    start: '开始',
+    reset: '重置',
+    ok: '确定',
+    cancel: '取消'
   }
 }

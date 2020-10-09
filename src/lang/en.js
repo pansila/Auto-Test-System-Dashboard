@@ -238,6 +238,32 @@ export default {
     test_suite: 'Test Suite',
     run_date: 'Run Date',
     tester: 'Tester',
-    status: 'Status'
+    status: 'Status',
+    all_test_cases: 'All Test Cases',
+    name: 'Name',
+    value: 'Value'
+  },
+  task: {
+    test_suite_placeholder: 'Please select a test suite to run',
+    test_endpoint_placeholder: 'Please select test endpoints to run',
+    parallization: 'Parallization',
+    parallel_any: 'Any',
+    parallel_any_tip: 'Run on any of selected endpoints',
+    parallel_all: 'All',
+    parallel_all_tip: 'Run on all selected endpoints',
+    priority: 'Priority',
+    priority_low: 'Low',
+    priority_medium: 'Medium',
+    priority_high: 'High',
+    test_cases: 'Test Cases',
+    variables: 'Variables',
+    upload_files: 'Upload Files',
+    tester: 'Tester',
+    cc: 'CC',
+    cc_placeholder: 'Others to notify',
+    start: 'Start',
+    reset: 'Reset',
+    ok: 'OK',
+    cancel: 'Cancel'
   }
 }

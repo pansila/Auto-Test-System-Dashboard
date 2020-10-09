@@ -88,7 +88,7 @@
       <el-form ref="form" v-loading="listFormLoading" :model="form" label-width="120px">
         <el-form-item label="Test Suite">
           <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run">
-            <el-option v-for="(t, i) in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="i" />
+            <el-option v-for="(t, i) in test_suite_list" :key="t" :label="t | replaceSpace" :value="i" />
           </el-select>
         </el-form-item>
         <el-form-item label="Test Endpoints">
@@ -310,6 +310,26 @@ export default {
         }
       }
       return variables
+    },
+    test_suite_list() {
+      const tss = []
+      for (let i = 0; i < this.tests.length; i++) {
+        if (i === 0) {
+          tss.push(this.tests[i].test_suite)
+          continue
+        }
+        let j
+        for (j = 0; j < i; j++) {
+          if (this.tests[i].test_suite === this.tests[j].test_suite) {
+            tss.push(this.tests[i].test_suite + ` (${this.tests[i].path})`)
+            break
+          }
+        }
+        if (j === i) {
+          tss.push(this.tests[i].test_suite)
+        }
+      }
+      return tss
     }
   },
   watch: {
@@ -567,6 +587,10 @@ export default {
     },
     async handleRetrigger(index, row) {
       this.retrigger_task = this.tasks[index]
+      if (!this.retrigger_task.test_id) {
+        this.$message.warning('Test has been deleted, can\'t retrigger it again')
+        return
+      }
       const [organization, team] = this.organization_team
       let test
 
@@ -586,7 +610,7 @@ export default {
 
       try {
         await this.fetchTestList()
-        test = await fetchTest(this.retrigger_task.test_suite, { organization, team })
+        test = await fetchTest({ id: this.retrigger_task.test_id, organization, team })
         this.listFormLoading = false
       } catch (error) {
         this.listFormLoading = false

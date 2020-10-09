@@ -38,7 +38,9 @@
       </el-table-column>
       <el-table-column label="UUID" min-width="100" header-align="center" align="center">
         <template slot-scope="scope">
-          {{ scope.row.endpoint_uid }}
+          <a @click="clickToCopy(scope.row.endpoint_uid)">
+            {{ scope.row.endpoint_uid }}
+          </a>
         </template>
       </el-table-column>
       <el-table-column label="Last Run" width="195" align="center">
@@ -70,16 +72,14 @@
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="fetchEndpointList" />
 
     <el-dialog title="Edit Endpoint Configurations" :visible.sync="dialogFormVisible">
-      <el-form ref="form" v-loading="listFormLoading" :model="form" label-width="120px">
+      <JsonEditor v-show="false" :data="endpoint_config" />
+      <el-form ref="form" v-loading="listFormLoading" :model="form" label-width="140px">
         <el-form-item label="Name">
           <el-input v-model="form.endpoint_name" />
         </el-form-item>
-        <el-form-item label="Address">
-          <el-input v-model="form.endpoint_address" />
-        </el-form-item>
         <el-form-item label="Supported Tests">
           <el-select v-model="form.tests" placeholder="Please select test cases this endpoint supports" multiple>
-            <el-option v-for="t in tests" :key="t.test_suite" :label="t.test_suite | replaceSpace" :value="t.test_suite" />
+            <el-option v-for="t in test_suite_list" :key="t" :label="t | replaceSpace" :value="t" />
           </el-select>
         </el-form-item>
         <el-form-item label="Enable/Disable">
@@ -87,7 +87,6 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button v-if="addEndpoint" @click="onTestConnectivity">Check online</el-button>
         <el-button @click="dialogFormVisible = false">{{ 'cancel' }}</el-button>
         <el-button type="primary" @click="onSubmit">{{ 'confirm' }}</el-button>
       </div>
@@ -98,14 +97,15 @@
 <script>
 import { mapGetters } from 'vuex'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
-import { testEndpoint, updateEndpoint, deleteEndpoint, fetchTests, fetchEndpoints, authorizeEndpoint, forbidEndpoint, downloadFile } from '@/api/testSuite'
+import { testEndpoint, updateEndpoint, deleteEndpoint, fetchTests, fetchEndpoints, authorizeEndpoint, forbidEndpoint, downloadFile, fetchEndpointConfig } from '@/api/testSuite'
 import waves from '@/directive/waves' // Waves directive
 import { setTimeout } from 'timers'
 import fileDownload from 'js-file-download'
+import JsonEditor from '@/components/JsonEditor'
 
 export default {
   name: 'TestReport',
-  components: { Pagination },
+  components: { Pagination, JsonEditor },
   directives: { waves },
   filters: {
     replaceSpace(data) {
@@ -128,16 +128,15 @@ export default {
   },
   data() {
     return {
-      addEndpoint: false,
       tests: [],
       endpoints: [],
       total: 0,
       listLoading: false,
       listFormLoading: false,
       dialogFormVisible: false,
+      endpoint_config: '',
       form: {
         endpoint_name: '',
-        endpoint_address: '',
         enable: false,
         tests: [],
         uid: null
@@ -155,7 +154,28 @@ export default {
   computed: {
     ...mapGetters([
       'organization_team'
-    ])
+    ]),
+    // append path if found duplicate test suites to tell them apart
+    test_suite_list() {
+      const tss = []
+      for (let i = 0; i < this.tests.length; i++) {
+        if (i === 0) {
+          tss.push(this.tests[i].test_suite)
+          continue
+        }
+        let j
+        for (j = 0; j < i; j++) {
+          if (this.tests[i].test_suite === this.tests[j].test_suite) {
+            tss.push(this.tests[i].test_suite + ` (${this.tests[i].path})`)
+            break
+          }
+        }
+        if (j === i) {
+          tss.push(this.tests[i].test_suite)
+        }
+      }
+      return tss
+    }
   },
   watch: {
     async organization_team(value) {
@@ -201,6 +221,16 @@ export default {
       this.listLoading = true
       try {
         this.tests = await fetchTests(this.listQuery)
+      } catch (error) {
+        console.error(error)
+      }
+      this.listLoading = false
+    },
+    async getEndpointConfig(uuid) {
+      const [organization, team] = this.organization_team
+      this.listLoading = true
+      try {
+        this.endpoint_config = await fetchEndpointConfig({ organization, team, uuid })
       } catch (error) {
         console.error(error)
       }
@@ -262,6 +292,7 @@ export default {
         return
       }
       await this.fetchTestList()
+      await this.getEndpointConfig(this.endpoints[index].endpoint_uid)
 
       this.addEndpoint = false
       this.form.endpoint_name = this.endpoints[index].name
@@ -306,6 +337,10 @@ export default {
       const random_num = Math.random().toString(10).substring(2) // bypass the web cache
       const resp = await downloadFile({ file: 'get-endpoint.py', random_num })
       fileDownload(resp, 'get-endpoint.py')
+    },
+    clickToCopy(uuid) {
+      navigator.clipboard.writeText(uuid)
+      this.$message('UUID has been copied to clipboard')
     }
   }
 }

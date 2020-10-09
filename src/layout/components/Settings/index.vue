@@ -31,7 +31,7 @@
         <span>{{ $t('settings.sidebarLogo') }}</span>
         <el-switch v-model="sidebarLogo" class="drawer-switch" />
       </div>
-      <a target="_blank" class="job-link">
+      <a target="_blank" class="job-link" @click="clickToCopy">
         <el-alert
           :title="organization_team_id"
           type="success"
@@ -129,6 +129,18 @@ export default {
         key: 'theme',
         value: val
       })
+    },
+    clickToCopy() {
+      if (this.organization_team) {
+        const [organization, team] = this.organization_team
+        if (team) {
+          navigator.clipboard.writeText(team)
+          this.$message('Team ID has been copied to clipboard')
+        } else {
+          navigator.clipboard.writeText(organization)
+          this.$message('Organization ID has been copied to clipboard')
+        }
+      }
     }
   }
 }

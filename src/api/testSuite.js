@@ -8,9 +8,9 @@ export function fetchTests(query) {
   })
 }
 
-export function fetchTest(test, query) {
+export function fetchTest(query) {
   return request({
-    url: '/test/' + test,
+    url: '/test/detail',
     method: 'get',
     params: query
   })
@@ -117,6 +117,14 @@ export function forbidEndpoint(data) {
 export function fetchQueuingTests(query) {
   return request({
     url: '/endpoint/queue/',
+    method: 'get',
+    params: query
+  })
+}
+
+export function fetchEndpointConfig(query) {
+  return request({
+    url: '/endpoint/config',
     method: 'get',
     params: query
   })

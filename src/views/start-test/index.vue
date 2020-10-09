@@ -1,65 +1,42 @@
 <template>
   <div class="page-container">
     <el-form ref="form" v-loading="listLoading" :model="form" label-width="120px">
-      <el-form-item label="Test Suite">
+      <el-form-item :label="$t('testTable.test_suite')">
         <el-row :gutter="10" type="flex">
           <el-col>
-            <el-select v-model="form.test_suite_idx" placeholder="Please select a test suite to run" style="width: 50%" @change="onTestSuiteChange">
+            <el-select v-model="form.test_suite_idx" :placeholder="$t('task.test_suite_placeholder')" style="width: 50%" @change="onTestSuiteChange">
               <el-option v-for="(t, i) in test_suite_list" :key="t" :label="t" :value="i" />
             </el-select>
           </el-col>
         </el-row>
       </el-form-item>
-      <el-form-item label="Test Endpoints">
-        <el-select v-model="form.endpoints" placeholder="Please select test endpoints to run" multiple style="width: 50%">
+      <el-form-item :label="$t('route.testEndpoint')">
+        <el-select v-model="form.endpoints" :placeholder="$t('task.test_endpoint_placeholder')" multiple style="width: 50%">
           <el-option v-for="e in endpoints" :key="e.address" :label="e.name" :value="e.endpoint_uid" />
         </el-select>
       </el-form-item>
-      <el-form-item label="Priority">
+      <el-form-item :label="$t('task.priority')">
         <el-radio-group v-model="form.priority">
-          <el-radio label="1">Low</el-radio>
-          <el-radio label="2">Medium</el-radio>
-          <el-radio label="3">High</el-radio>
+          <el-radio label="1">{{ $t('task.priority_low') }}</el-radio>
+          <el-radio label="2">{{ $t('task.priority_medium') }}</el-radio>
+          <el-radio label="3">{{ $t('task.priority_high') }}</el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="Parallization">
+      <el-form-item :label="$t('task.parallization')">
         <el-radio-group v-model="form.parallelization">
-          <el-tooltip content="Run on any of selected endpoints"><el-radio label="0">Any</el-radio></el-tooltip>
-          <el-tooltip content="Run on all selected endpoints"><el-radio label="1">All</el-radio></el-tooltip>
+          <el-tooltip :content="$t('task.parallel_any_tip')"><el-radio label="0">{{ $t('task.parallel_any') }}</el-radio></el-tooltip>
+          <el-tooltip :content="$t('task.parallel_all_tip')"><el-radio label="1">{{ $t('task.parallel_all') }}</el-radio></el-tooltip>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="Test Cases">
+      <el-form-item :label="$t('task.test_cases')">
         <el-select v-model="form.test_cases" placeholder="Please select test cases to run" multiple style="width: 50%" @change="onTestCaseChange">
           <el-option v-for="t in test_cases" :key="t" :label="t | replaceSpace" :value="t" />
         </el-select>
-        <el-checkbox v-model="form.test_cases_all" style="margin-left: 5px">All Test Cases</el-checkbox>
       </el-form-item>
-      <el-form-item label="Variables">
-        <el-table :data="variables" border fit style="width: 100%">
-          <el-table-column label="Name" min-width="50px" header-align="center">
-            <template slot-scope="scope">
-              <span style="margin-left: 10px">{{ scope.row.name }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="Value" min-width="100px" header-align="center">
-            <template slot-scope="scope">
-              <template v-if="scope.row.edit">
-                <el-input v-model="scope.row.value" class="edit-input" size="small" />
-                <el-button class="cancel-btn" size="small" icon="el-icon-refresh" type="warning" @click="cancelEdit(scope.row)">cancel</el-button>
-              </template>
-              <span v-else style="margin-left: 10px">{{ scope.row.value }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="Action" align="center">
-            <template slot-scope="scope">
-              <el-button v-if="scope.row.edit" type="success" size="small" icon="el-icon-circle-check-outline" @click="confirmEdit(scope.row)">OK</el-button>
-              <el-button v-else type="primary" size="small" icon="el-icon-edit" @click="scope.row.edit=!scope.row.edit">Edit</el-button>
-              <el-button size="small" @click="handleReset(scope.$index, scope.row)">Reset</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <el-form-item :label="$t('task.variables')">
+        <variable-table :data="variables" :border="true" @change="onVariableTableChange" />
       </el-form-item>
-      <el-form-item label="Upload Files">
+      <el-form-item :label="$t('task.upload_files')">
         <el-upload
           class="upload-demo"
           action="http://abc.com"
@@ -71,20 +48,20 @@
           :on-exceed="handleExceed"
           :on-change="onUploadFileChange"
         >
-          <el-button size="small" type="primary">Upload</el-button>
+          <el-button size="small" type="primary">{{ $t('task.upload') }}</el-button>
         </el-upload>
       </el-form-item>
-      <el-form-item style="width: 50%" label="Tester">
+      <el-form-item style="width: 30%" :label="$t('task.tester')">
         <el-input :value="email" disabled />
       </el-form-item>
-      <el-form-item label="CC">
-        <el-select v-model="form.cc" placeholder="Others to notify" multiple style="width: 50%">
+      <el-form-item :label="$t('task.cc')">
+        <el-select v-model="form.cc" :placeholder="$t('task.cc_placeholder')" multiple style="width: 50%">
           <el-option v-for="u in coworkers" :key="u.email" :label="e.name" :value="e.email" />
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit">Start</el-button>
-        <el-button @click="onReset">Reset</el-button>
+        <el-button type="primary" @click="onSubmit">{{ $t('task.start') }}</el-button>
+        <el-button @click="onReset">{{ $t('task.reset') }}</el-button>
       </el-form-item>
     </el-form>
     <el-dialog title="Test Status" :visible.sync="testStatusDialogVisible" width="760px">
@@ -109,9 +86,15 @@ import 'xterm/css/xterm.css'
 import 'xterm/lib/xterm.js'
 import { FitAddon } from 'xterm-addon-fit'
 import { getToken } from '@/utils/auth'
+import VariableTable from './variable_table'
+
+const ALL_TEST_CASES = 'testTable.all_test_cases'
 
 export default {
   name: 'StartTest',
+  components: {
+    VariableTable
+  },
   filters: {
     replaceSpace(data) {
       return data.replace(/-/g, ' ').replace(/_/g, ' ')
@@ -133,6 +116,7 @@ export default {
       testStatusDialogVisible: false,
       socketURL: process.env.NODE_ENV === 'development' ? 'ws://127.0.0.1:5000' : '',
       task_id: null,
+      variablesChanged: {},
       form: {
         tester: '',
         cc: [],
@@ -140,7 +124,7 @@ export default {
         parallelization: '0',
         test_suite_idx: null,
         endpoints: [],
-        test_cases: [],
+        test_cases: [this.$t(ALL_TEST_CASES)],
         test_cases_all: true
       }
     }
@@ -152,27 +136,15 @@ export default {
     ]),
     test_cases() {
       if (this.tests.length > 0 && this.form.test_suite_idx >= 0) {
-        return this.tests[this.form.test_suite_idx].test_cases
+        return [this.$t(ALL_TEST_CASES)].concat(this.tests[this.form.test_suite_idx].test_cases)
       }
       return []
     },
     variables() {
-      const variables = []
-      if (this.tests.length > 0 && this.form.test_suite_idx >= 0) {
-        const vars = this.tests[this.form.test_suite_idx].variables
-        for (const v in vars) {
-          if (v !== 'task_id' &&
-              v !== 'address_daemon' &&
-              v !== 'port_daemon' &&
-              v !== 'port_test' &&
-              v !== 'remote_daemon_address' &&
-              v !== 'remote_test_address'
-          ) {
-            variables.push({ name: v, value: vars[v], edit: false, originalValue: vars[v] })
-          }
-        }
+      if (this.form.test_suite_idx !== null && this.form.test_suite_idx >= 0) {
+        return this.tests[this.form.test_suite_idx].variables
       }
-      return variables
+      return {}
     },
     // append path if found duplicate test suites to tell them apart
     test_suite_list() {
@@ -342,19 +314,12 @@ export default {
       }
       task_data.priority = this.form.priority
       if (this.form.test_cases && this.form.test_cases.length !== 0) {
-        task_data.test_cases = this.form.test_cases
-      }
-      const vars = this.variables
-      task_data.variables = {}
-      vars.forEach(v => {
-        if (v.value !== v.originalValue) {
-          try {
-            task_data.variables[v.name] = JSON.parse(v.value)
-          } catch (error) {
-            console.error(error)
-          }
+        const all_idx = this.form.test_cases.indexOf(this.$t(ALL_TEST_CASES))
+        if (all_idx < 0) {
+          task_data.test_cases = this.form.test_cases
         }
-      })
+      }
+      task_data.variables = this.variablesChanged || undefined
       task_data.upload_dir = this.resource_id
       task_data.tester = this.email
       task_data.cc = this.form.cc
@@ -371,6 +336,7 @@ export default {
         })
         return
       }
+
       this.$message({
         message: 'Schedule the test successfully',
         type: 'success'
@@ -400,11 +366,6 @@ export default {
         console.error('no tests found')
       }
       this.tests = tests
-      this.tests.forEach(test => {
-        for (const k in test.variables) {
-          test.variables[k] = JSON.stringify(test.variables[k])
-        }
-      })
       if (this.tests.length > 0) {
         this.form.test_suite_idx = 0
       } else {
@@ -420,33 +381,33 @@ export default {
       })
     },
     onTestSuiteChange(test_suite_idx) {
+      this.form.test_cases = [this.$t(ALL_TEST_CASES)]
+      this.form.test_cases_all = true
+      this.variablesChanged = {}
     },
     onTestCaseChange(test_cases) {
-      if (test_cases.length > 0) {
-        this.form.test_cases_all = false
-      } else {
+      const all_idx = test_cases.indexOf(this.$t(ALL_TEST_CASES))
+      if (test_cases.length === 0) {
+        this.form.test_cases = [this.$t(ALL_TEST_CASES)]
         this.form.test_cases_all = true
+        return
+      }
+      if (test_cases.length > 0 && all_idx >= 0) {
+        if (!this.form.test_cases_all) {
+          this.form.test_cases = [this.$t(ALL_TEST_CASES)]
+          this.form.test_cases_all = true
+        } else {
+          test_cases.splice(all_idx, 1)
+          this.form.test_cases = test_cases
+          this.form.test_cases_all = false
+        }
+      } else {
+        this.form.test_cases = test_cases
       }
     },
-    cancelEdit(row) {
-      row.edit = false
-      row.value = row.oldValue || row.originalValue
-    },
-    confirmEdit(row) {
-      row.edit = false
-      row.oldValue = row.value
-      this.$message({
-        message: 'The value has been edited',
-        type: 'success'
-      })
-    },
-    handleReset(index, row) {
-      row.edit = false
-      row.value = row.originalValue
-      this.$message({
-        message: 'The value has been restored to the original value',
-        type: 'warning'
-      })
+    onVariableTableChange(newVal) {
+      const { name, value } = newVal
+      this.variablesChanged[name] = value
     },
     handleRemove(file, fileList) {
       this.fileList = fileList
@@ -467,13 +428,5 @@ export default {
 <style scoped>
   .page-container{
     margin: 30px;
-  }
-  .edit-input {
-    padding-right: 100px;
-  }
-  .cancel-btn {
-    position: absolute;
-    right: 15px;
-    top: 10px;
   }
 </style>

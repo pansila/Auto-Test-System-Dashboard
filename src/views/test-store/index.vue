@@ -227,9 +227,9 @@ export default {
         return false
       }
       this.fileList = fileList.filter(file => {
-        const isLt50M = file.size / 1024 / 1024 < 50
-        if (!isLt50M) {
-          this.$message.error('File size should not be larger than 50MB')
+        const isLt1G = file.size < 1024 * 1024 * 1024
+        if (!isLt1G) {
+          this.$message.error('File size should not be larger than 1GB')
           return false
         }
         return true
@@ -346,7 +346,9 @@ export default {
       })
     },
     async uninstall() {
-      if (!this.current_package) return
+      if (!this.current_package) {
+        this.$message.error('Please select your associated organization or team')
+      }
       const [organization, team] = this.organization_team
       const data = { organization, team,
         proprietary: this.proprietary,
