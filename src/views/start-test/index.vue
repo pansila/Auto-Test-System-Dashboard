@@ -5,7 +5,10 @@
         <el-row :gutter="10" type="flex">
           <el-col>
             <el-select v-model="form.test_suite_idx" :placeholder="$t('task.test_suite_placeholder')" style="width: 50%" @change="onTestSuiteChange">
-              <el-option v-for="(t, i) in test_suite_list" :key="t" :label="t" :value="i" />
+              <el-option v-for="(t, i) in tests" :key="t.test_suite + t.path" :label="t.test_suite" :value="i">
+                <span style="float: left">{{ t.test_suite | replaceSpace }}</span>
+                <span style="float: right; color: #8492a6; font-size: 13px">{{ t.path | replaceSpace }}</span>
+              </el-option>
             </el-select>
           </el-col>
         </el-row>
@@ -145,27 +148,6 @@ export default {
         return this.tests[this.form.test_suite_idx].variables
       }
       return {}
-    },
-    // append path if found duplicate test suites to tell them apart
-    test_suite_list() {
-      const tss = []
-      for (let i = 0; i < this.tests.length; i++) {
-        if (i === 0) {
-          tss.push(this.tests[i].test_suite)
-          continue
-        }
-        let j
-        for (j = 0; j < i; j++) {
-          if (this.tests[i].test_suite === this.tests[j].test_suite) {
-            tss.push(this.tests[i].test_suite + ` (${this.tests[i].path})`)
-            break
-          }
-        }
-        if (j === i) {
-          tss.push(this.tests[i].test_suite)
-        }
-      }
-      return tss
     }
   },
   watch: {
