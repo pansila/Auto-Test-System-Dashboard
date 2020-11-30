@@ -33,7 +33,7 @@
     </el-table>
     <div class="trailer" @mouseover="addRowShow = true" @mouseleave="addRowShow = false">
       <br>
-      <el-divider v-if="addRowShow">
+      <el-divider v-if="addRowShow" class="trailer">
         <i class="el-icon-circle-plus-outline" style="cursor: pointer" @click="addRow" />
       </el-divider>
     </div>
@@ -75,7 +75,12 @@ export default {
           edit2: false
         })
       }
-      return _entries.sort()
+      if (Array.isArray(this.data)) {
+        return _entries
+      }
+      return _entries.sort((a, b) => {
+        return a.name.localeCompare(b.name)
+      })
     }
   },
   methods: {
@@ -104,12 +109,14 @@ export default {
           type: 'success'
         })
       }
-      delete this.data[row.oldName]
+      if (name !== row.oldName) {
+        delete this.data[row.oldName]
+        this.$emit('change', { name: row.oldName, value: undefined })
+      }
       if (name) {
         this.data[name] = value
         this.$emit('change', { name, value })
       }
-      this.$emit('change', { name: row.oldName, value: undefined })
       this.forceUpdate++
     }
   }
@@ -118,7 +125,7 @@ export default {
 
 <style scoped>
 .trailer {
-  line-height:16px;
   margin: 0 0 5px 0;
+  line-height:16px;
 }
 </style>

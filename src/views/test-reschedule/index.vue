@@ -215,7 +215,7 @@ export default {
     },
     async onTaskCancel(task) {
       const [organization, team] = this.organization_team
-      await this.$confirm('Confirm to the task?', 'Warning', {
+      await this.$confirm('Confirm to cancel the task?', 'Warning', {
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel',
         type: 'warning'

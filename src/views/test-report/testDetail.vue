@@ -11,6 +11,7 @@ export default {
       testStat: [],
       indent: 20,
       defaultExpandAll: false,
+      listLoading: false,
       columns: [
         {
           label: 'Step Name',
@@ -24,7 +25,7 @@ export default {
           label: 'Step Content',
           key: 'after_content',
           align: 'left',
-          minWidth: '200',
+          minWidth: '50',
           headerAlign: 'center'
         },
         {
@@ -72,6 +73,7 @@ export default {
   },
   methods: {
     async fetchData() {
+      this.listLoading = true
       try {
         this.data = await fetchTestResult(
           {
@@ -83,10 +85,14 @@ export default {
       } catch (error) {
         console.error(error)
       }
-      if (!this.data) return
+      if (!this.data) {
+        this.listLoading = false
+        return
+      }
       const ret = processRobotResultXML(this.data)
       this.testLog = ret['test_log']
       this.testStat = ret['test_stat']
+      this.listLoading = false
     },
     statusFilter(status) {
       const statusMap = {
@@ -165,63 +171,64 @@ export default {
     }
   },
   render: function(h) {
-    return (<div style='margin: 30px'>
-      <el-table data={this.testStat} border fit>
-        {this.statColumns.map(item => {
-          return <el-table-column
-            key={item.key}
-            label={item.label}
-            width={item.width}
-            min-width={item.minWidth}
-            align={item.align || 'center'}
-            header-align={item.headerAlign}
-            { ...{
-              scopedSlots: {
-                default: scope => {
-                  if (item.key === 'ratio') {
-                    return <el-progress text-inside={true} stroke-width={18} percentage={100 * scope.row['pass'] / scope.row['total'] | 0}></el-progress>
+    return (
+      <div style='margin: 30px'>
+        <el-table data={this.testStat} border fit v-loading={this.listLoading}>
+          {this.statColumns.map(item => {
+            return <el-table-column
+              key={item.key}
+              label={item.label}
+              width={item.width}
+              min-width={item.minWidth}
+              align={item.align || 'center'}
+              header-align={item.headerAlign}
+              { ...{
+                scopedSlots: {
+                  default: scope => {
+                    if (item.key === 'ratio') {
+                      return <el-progress text-inside={true} stroke-width={18} percentage={100 * scope.row['pass'] / scope.row['total'] | 0}></el-progress>
+                    }
+                    return <span>{scope.row[item.key]}</span>
                   }
-                  return <span>{scope.row[item.key]}</span>
                 }
-              }
-            } }
-          >
-          </el-table-column>
-        })}
-      </el-table>
-      <br/>
-      <el-table data={this.testLog} row-style={this.showRow} border>
-        {this.columns.map(item => {
-          return <el-table-column
-            key={item.key}
-            label={item.label}
-            width={item.width}
-            min-width={item.minWidth}
-            align={item.align || 'center'}
-            header-align={item.headerAlign}
-            { ...{
-              scopedSlots: {
-                default: scope => {
-                  const ret = []
-                  if (item.expand) {
-                    ret.push(this.generateTableSpread(scope))
-                    ret.push(this.generateStepName(scope, item))
-                  } else if (item.key === 'status' && scope.row[item.key]) {
-                    ret.push(<el-tag type={this.statusFilter(scope.row[item.key])}>{scope.row[item.key]}</el-tag>)
-                  } else if (item.key.endsWith('content')) {
-                    ret.push(this.generateContent(scope, item))
-                  } else {
-                    ret.push(this.generateDuration(scope, item))
+              } }
+            >
+            </el-table-column>
+          })}
+        </el-table>
+        <br/>
+        <el-table data={this.testLog} row-style={this.showRow} border v-loading={this.listLoading}>
+          {this.columns.map(item => {
+            return <el-table-column
+              key={item.key}
+              label={item.label}
+              width={item.width}
+              min-width={item.minWidth}
+              align={item.align || 'center'}
+              header-align={item.headerAlign}
+              { ...{
+                scopedSlots: {
+                  default: scope => {
+                    const ret = []
+                    if (item.expand) {
+                      ret.push(this.generateTableSpread(scope))
+                      ret.push(this.generateStepName(scope, item))
+                    } else if (item.key === 'status' && scope.row[item.key]) {
+                      ret.push(<el-tag type={this.statusFilter(scope.row[item.key])}>{scope.row[item.key]}</el-tag>)
+                    } else if (item.key.endsWith('content')) {
+                      ret.push(this.generateContent(scope, item))
+                    } else {
+                      ret.push(this.generateDuration(scope, item))
+                    }
+                    return ret
                   }
-                  return ret
                 }
-              }
-            } }
-          >
-          </el-table-column>
-        })}
-      </el-table>
-    </div>
+              } }
+            >
+            </el-table-column>
+          })}
+        </el-table>
+      </div>
     )
   }
 }

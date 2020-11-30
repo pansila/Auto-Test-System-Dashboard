@@ -112,7 +112,7 @@ const DOC_STATE_MODIFIED = 'modified'
 const DOC_STATE_MODIFING = 'modifing'
 
 export default {
-  name: 'MarddownEditor',
+  name: 'ScriptEditor',
   props: {
     value: {
       type: String,
@@ -278,6 +278,10 @@ export default {
         const path = []
         this.getScriptPath(path, this.scripts, this.currentNode.data)
         file_path = path.join('/')
+        if (!file_path) {
+          console.error('Can not find file path, current node is ' + this.currentNode.data.label)
+          return
+        }
       }
 
       await updateScript({
@@ -319,8 +323,7 @@ export default {
         events: {
           change: this.onEditorChange
         },
-        height: '600px',
-        usageStatistics: false
+        height: '600px'
       })
       if (this.value) {
         this.userScriptEditor.setValue(this.value)

@@ -70,7 +70,7 @@ function process_tag_status(child, node, parent, flow_control) {
 function process_tag_kw(child, node, parent, flow_control) {
   let attr
   attr = child.attributes.getNamedItem('name')
-  if (attr.value === 'Run Keyword') {
+  if (attr.value.startsWith('Run Keyword')) {
     flow_control.depth++
   }
 
@@ -171,7 +171,9 @@ function process_test_suite(tree, { depth = traverse_depth, expand_level = 2, le
       process_tag_status(child, null, parent, flow_control)
     }
 
-    if (counting) return
+    // adding incomplete nodes for status == 'PASS' is harmful as they're unseen in this case.
+    if (counting && parent.status === 'PASS') return
+    if (parent.status === 'FAIL') parent._expand = true
 
     const node = {}
     node['_parent'] = parent
@@ -226,7 +228,9 @@ function process_test_suite(tree, { depth = traverse_depth, expand_level = 2, le
       ret.push.apply(ret, r)
     }
   })
+
   parent['_has_children'] = flow_control.stop_cnt !== child_num
+
   return ret
 }
 

@@ -33,6 +33,12 @@ if (process.env.NODE_ENV === 'production') {
   mockXHR()
 }
 
+Vue.directive('focus', {
+  inserted: function(el) {
+    el.__vue__.focus()
+  }
+})
+
 Vue.use(Element, {
   size: Cookies.get('size') || 'medium', // set element-ui default size
   i18n: (key, value) => i18n.t(key, value)
