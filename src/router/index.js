@@ -196,15 +196,14 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/help',
+    path: '/documentation/:path',
     component: Layout,
-    hidden: true,
     children: [
       {
-        path: 'index',
-        component: () => import('@/views/error-page/404'),
-        name: 'help',
-        meta: { title: 'help', icon: 'documentation', noCache: true, affix: true }
+        path: '',
+        component: () => import('@/views/documentation/index'),
+        name: 'documentation',
+        meta: { title: 'documentation', icon: 'documentation', noCache: true, affix: true }
       }
     ]
   },

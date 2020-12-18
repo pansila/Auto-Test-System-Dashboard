@@ -51,7 +51,7 @@
               <el-upload
                 style="float: right"
                 class="upload-demo"
-                action="http://abc.com"
+                action="#"
                 multiple
                 :auto-upload="false"
                 :file-list="fileList"
@@ -73,7 +73,14 @@
         </el-card>
       </el-col>
     </el-row>
-    <div v-show="currentEditType === 'test_scripts'" :id="userScriptID" style="margin-top: 30px" />
+    <Editor
+      v-show="currentEditType === 'test_scripts'"
+      :id="userScriptID"
+      ref="userScriptEditor"
+      :options="editorOptions"
+      style="margin-top: 30px"
+      @change="onEditorChange"
+    />
     <div v-show="currentEditType === 'test_libraries'" :id="backingScriptID" style="margin-top: 30px; width: 100%; height: 500px;" />
     <el-dialog title="Rename" :visible.sync="dialogRenameVisible">
       <el-form :model="form">
@@ -91,12 +98,12 @@
 
 <script>
 // deps for editor
-import 'codemirror/lib/codemirror.css' // codemirror
-import 'tui-editor/dist/tui-editor.css' // editor ui
-import 'tui-editor/dist/tui-editor-contents.css' // editor content
+import 'codemirror/lib/codemirror.css'
+import '@toast-ui/editor/dist/toastui-editor.css'
+
+import { Editor } from '@toast-ui/vue-editor'
 
 import { mapGetters } from 'vuex'
-import Editor from 'tui-editor'
 import defaultOptions from './defaultOptions'
 import { fetchScripts, getScript, updateScript, removeScript, uploadScripts } from '@/api/testSuite'
 import { debounce } from '@/utils'
@@ -113,6 +120,9 @@ const DOC_STATE_MODIFING = 'modifing'
 
 export default {
   name: 'ScriptEditor',
+  components: {
+    Editor
+  },
   props: {
     value: {
       type: String,
@@ -145,7 +155,7 @@ export default {
     height: {
       type: String,
       required: false,
-      default: 'auto'
+      default: '100%'
     },
     language: {
       type: String,
@@ -157,7 +167,6 @@ export default {
     return {
       tests: [],
       testSuiteIdx: null,
-      userScriptEditor: null,
       backingScriptEditor: null,
       testScripts: null,
       testLibraries: null,
@@ -189,7 +198,18 @@ export default {
       return options
     },
     editor() {
-      return this.currentEditType === 'test_scripts' ? this.userScriptEditor : this.backingScriptEditor
+      const _this = this
+      return this.currentEditType === 'test_scripts' ? {
+        setValue(data) {
+          _this.$refs.userScriptEditor.invoke('setMarkdown', data)
+        },
+        getValue() {
+          return _this.$refs.userScriptEditor.invoke('getMarkdown')
+        },
+        moveCursorTo() {
+          _this.$refs.userScriptEditor.invoke('moveCursorToStart')
+        }
+      } : this.backingScriptEditor
     },
     scripts() {
       return this.currentEditType === 'test_scripts' ? this.testScripts : this.testLibraries
@@ -217,8 +237,8 @@ export default {
   },
   watch: {
     value(newValue, preValue) {
-      if (newValue !== preValue && newValue !== this.userScriptEditor.getValue()) {
-        this.userScriptEditor.setValue(newValue)
+      if (newValue !== preValue && newValue !== this.$refs.userScriptEditor.invoke('getMarkdown')) {
+        this.$refs.userScriptEditor.invode('setMarkdown', newValue)
       }
     },
     language(val) {
@@ -226,10 +246,10 @@ export default {
       this.initEditor()
     },
     height(newValue) {
-      this.userScriptEditor.height(newValue)
+      this.$refs.userScriptEditor.invoke('height', newValue)
     },
     mode(newValue) {
-      this.userScriptEditor.changeMode(newValue)
+      this.$refs.userScriptEditor.invoke('changeMode', newValue)
     },
     async organization_team(newVal) {
       await this.fetchData()
@@ -265,29 +285,26 @@ export default {
       this.testScripts = data.test_scripts.children
       this.testLibraries = data.test_libraries.children
     },
-    async updateScriptContent(editor, file_path) {
+    async updateScriptContent() {
       if (!this.organization_team) return
       const [organization, team] = this.organization_team
-      editor = editor || this.editor
 
       if (!this.currentNode || this.currentNode.data._flag !== DOC_STATE_MODIFING) {
         return
       }
 
+      const path = []
+      this.getScriptPath(path, this.scripts, this.currentNode.data)
+      const file_path = path.join('/')
       if (!file_path) {
-        const path = []
-        this.getScriptPath(path, this.scripts, this.currentNode.data)
-        file_path = path.join('/')
-        if (!file_path) {
-          console.error('Can not find file path, current node is ' + this.currentNode.data.label)
-          return
-        }
+        console.error('Can not find file path, current node is ' + this.currentNode.data.label)
+        return
       }
 
       await updateScript({
         file: file_path,
         script_type: this.currentEditType,
-        content: editor.getValue(),
+        content: this.editor.getValue(),
         organization,
         team
       })
@@ -317,20 +334,12 @@ export default {
       this.lastFile = this.editor.getValue()
     },
     initEditor() {
-      this.userScriptEditor = new Editor({
-        el: document.getElementById(this.userScriptID),
-        ...this.editorOptions,
-        events: {
-          change: this.onEditorChange
-        },
-        height: '600px'
-      })
       if (this.value) {
-        this.userScriptEditor.setValue(this.value)
+        this.$refs.userScriptEditor.invoke('setMarkdown', this.value)
       }
-      this.userScriptEditor.on('change', () => {
-        this.$emit('input', this.userScriptEditor.getValue())
-      })
+      // this.userScriptEditor.on('change', () => {
+      //   this.$emit('input', this.userScriptEditor.getValue())
+      // })
 
       this.backingScriptEditor = ace.edit(this.backingScriptID)
       this.backingScriptEditor.setTheme('ace/theme/chrome')
@@ -338,9 +347,9 @@ export default {
       this.backingScriptEditor.on('change', this.onEditorChange)
     },
     destroyEditor() {
-      if (!this.userScriptEditor) return
-      this.userScriptEditor.off('change')
-      this.userScriptEditor.remove()
+      // this.$refs.userScriptEditor.invoke('off', 'change')
+      // this.$refs.userScriptEditor.invoke('remove')
+      this.$refs.userScriptEditor.invoke('setMarkdown', '')
 
       if (!this.backingScriptEditor) return
       this.backingScriptEditor.destroy()
@@ -445,8 +454,7 @@ export default {
         data._flag = DOC_STATE_NULL
       }
       this.editor.setValue(res_data)
-      if (this.editor.moveCursorTo) this.editor.moveCursorTo(0, 0)
-      if (this.editor.moveCursorToStart) this.editor.moveCursorToStart()
+      this.editor.moveCursorTo(0, 0)
 
       this.lastFile = this.editor.getValue()
     },

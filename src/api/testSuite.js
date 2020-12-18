@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { isJson } from '@/utils/validate'
 
 export function fetchTests(query) {
   return request({
@@ -284,5 +285,122 @@ export function downloadFile(params) {
     method: 'get',
     responseType: 'blob',
     params
+  })
+}
+
+export function getDocument(path, params) {
+  return request({
+    url: '/doc/' + path,
+    method: 'get',
+    params,
+    headers: {
+      'Cache-Control': 'no-cache'
+    },
+    transformResponse: function(response) {
+      if (isJson(response)) {
+        return JSON.parse(response)
+      } else {
+        return response
+      }
+    }
+  })
+}
+
+export function updateDocument(path, data) {
+  return request({
+    url: '/doc/' + path,
+    method: 'post',
+    data
+  })
+}
+
+export function deleteDocument(path, data) {
+  return request({
+    url: '/doc/' + path,
+    method: 'delete',
+    data
+  })
+}
+
+export function lockDocument(path, data) {
+  return request({
+    url: '/doc/' + path,
+    method: 'patch',
+    data
+  })
+}
+
+export function getDocRoots(params) {
+  return request({
+    url: '/doc/roots',
+    method: 'get',
+    params
+  })
+}
+
+export function editPrivilegeCheck(params) {
+  return request({
+    url: '/doc/check',
+    method: 'get',
+    params
+  })
+}
+
+export function getHistory(params) {
+  return request({
+    url: '/doc/history',
+    method: 'get',
+    params
+  })
+}
+
+export function getPictures(params) {
+  return request({
+    url: '/doc/pictures',
+    method: 'get',
+    params
+  })
+}
+
+export function uploadPictures(data) {
+  return request({
+    url: '/doc/pictures',
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export function deletePicture(data) {
+  return request({
+    url: '/doc/pictures',
+    method: 'delete',
+    data
+  })
+}
+
+export function getPicturePaths(params) {
+  return request({
+    url: '/doc/picture/path',
+    method: 'get',
+    params
+  })
+}
+
+export function createPicturePath(data) {
+  return request({
+    url: '/doc/picture/path',
+    method: 'post',
+    data
+  })
+}
+
+export function deletePicturePath(data) {
+  return request({
+    url: '/doc/picture/path',
+    method: 'delete',
+    data
   })
 }

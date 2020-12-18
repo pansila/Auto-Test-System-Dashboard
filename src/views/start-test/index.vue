@@ -398,7 +398,7 @@ export default {
       this.$message.warning(`Limit to 3 files, selected ${files.length} files, All ${files.length + fileList.length} files`)
     },
     beforeRemove(file, fileList) {
-      return this.$confirm(`Are you sure to delte ${file.name}?`)
+      return this.$confirm(`Are you sure to delete ${file.name}?`)
     },
     onUploadFileChange(file, fileList) {
       this.fileList = fileList

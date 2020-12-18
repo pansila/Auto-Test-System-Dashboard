@@ -33,7 +33,7 @@
           </el-radio-group>
         </el-col>
         <el-col style="width: auto;">
-          <el-checkbox-button key="proprietary" v-model="proprietary" label="Proprietary">Proprietary</el-checkbox-button>
+          <el-checkbox key="proprietary" v-model="proprietary" label="Proprietary" border>Proprietary</el-checkbox>
         </el-col>
       </el-row>
     </div>
@@ -116,7 +116,7 @@
         </el-header>
         <el-main>
           <el-divider />
-          <div ref="package_description" />
+          <Viewer ref="package_description" :options="viewerOptions" />
         </el-main>
       </el-container>
     </el-dialog>
@@ -125,16 +125,16 @@
 
 <script>
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
-import { MessageBox } from 'element-ui'
 import { mapGetters } from 'vuex'
 import { fetchPackages, uploadPackage, updatePackage, getPackageInfo, installPackage, uninstallPackage, removePackage } from '@/api/testSuite'
-import Viewer from 'tui-editor/dist/tui-editor-Viewer'
-import 'tui-editor/dist/tui-editor.css' // editor ui
-import 'tui-editor/dist/tui-editor-contents.css' // editor content
+import 'codemirror/lib/codemirror.css'
+import '@toast-ui/editor/dist/toastui-editor.css'
+
+import { Viewer } from '@toast-ui/vue-editor'
 
 export default {
   name: 'DragTable',
-  components: { Pagination },
+  components: { Pagination, Viewer },
   filters: {
     replaceSpace(data) {
       return data.replace(/-/g, ' ').replace(/_/g, ' ')
@@ -166,7 +166,10 @@ export default {
       viewer: null,
       stars: 0,
       version: null,
-      versions: null
+      versions: null,
+      viewerOptions: {
+        usageStatistics: false
+      }
     }
   },
   computed: {
@@ -270,15 +273,7 @@ export default {
       this.versions = row.versions
       this.version = this.versions[0] || ''
       this.$nextTick(() => {
-        if (this.viewer) {
-          this.viewer.setValue(row.description)
-          return
-        }
-        this.viewer = new Viewer({
-          el: this.$refs.package_description,
-          initialValue: row.description,
-          usageStatistics: false
-        })
+        this.$refs.package_description.invoke('setMarkdown', row.description)
       })
     },
     async onStarChange() {
@@ -317,7 +312,7 @@ export default {
     },
     async install() {
       try {
-        await MessageBox.confirm('Installed package will overwrite what you installed before. Do you confirm to proceed', 'Warning', {
+        await this.$confirm('Installed package will overwrite what you installed before. Do you confirm to proceed', 'Warning', {
           confirmButtonText: 'OK',
           cancelButtonText: 'Cancel',
           type: 'warning'

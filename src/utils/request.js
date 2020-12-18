@@ -70,7 +70,7 @@ service.interceptors.response.use(
           })
         })
       }
-      return Promise.reject(res.data.data.message || 'error')
+      return Promise.reject(res.data.message || 'error')
     } else {
       return res
     }
