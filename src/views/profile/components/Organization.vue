@@ -17,7 +17,7 @@
           <template slot-scope="scope">
             <el-row type="flex" justify="left" align="middle" :gutter="5">
               <el-col style="width: auto">
-                <img :src="avatar_url + '/' + scope.row.value" class="user-avatar">
+                <img :src="scope.row.avatarUrl" class="user-avatar">
               </el-col>
               <el-col>
                 <span class="link-type" @click="onOrganization(scope.row)">{{ scope.row.label }}</span>
@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import { newOrganization, joinOrganization, fetchJoinedOrganizations, fetchJoinedOrganizationTeams, fetchAllOrganizations, quitOrganization, deleteOrganization } from '@/api/user'
+import { newOrganization, joinOrganization, fetchJoinedOrganizations, fetchJoinedOrganizationTeams, fetchAllOrganizations, quitOrganization, deleteOrganization, getOrganizationAvatar } from '@/api/user'
 
 export default {
   props: {
@@ -136,9 +136,22 @@ export default {
   },
   methods: {
     async getOrganizations() {
-      this.joined_organizations = await fetchJoinedOrganizations()
-      this.all_organizations = await fetchAllOrganizations()
-      this.organizations = await fetchJoinedOrganizationTeams()
+      let ret = await fetchJoinedOrganizations()
+      if (ret.code !== 20000) return
+      this.joined_organizations = await Promise.all(ret.data.organizations.map(async organization => {
+        const ret = await getOrganizationAvatar(organization.value)
+        if (ret.code !== 20000) return
+        organization.avatarUrl = `data:${ret.data.type};base64,` + ret.data.data
+        return organization
+      }))
+
+      ret = await fetchAllOrganizations()
+      if (ret.code !== 20000) return
+      this.all_organizations = ret.data.organizations
+
+      ret = await fetchJoinedOrganizationTeams()
+      if (ret.code !== 20000) return
+      this.organizations = ret.data.organization_team
     },
     async onNewOrgSubmit() {
       try {

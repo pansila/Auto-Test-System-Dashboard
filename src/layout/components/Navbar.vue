@@ -24,7 +24,7 @@
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
-          <img :src="avatar_url" class="user-avatar">
+          <img ref="avatarImage" class="user-avatar">
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
@@ -65,6 +65,7 @@ import Screenfull from '@/components/Screenfull'
 import SizeSelect from '@/components/SizeSelect'
 import LangSelect from '@/components/LangSelect'
 import Search from '@/components/HeaderSearch'
+import { getAvatar } from '@/api/user'
 
 export default {
   components: {
@@ -79,7 +80,6 @@ export default {
   },
   data() {
     return {
-      avatar_url: process.env.VUE_APP_BASE_API + '/user/avatar'
     }
   },
   computed: {
@@ -88,6 +88,13 @@ export default {
       'avatar',
       'device'
     ])
+  },
+  async mounted() {
+    const ret = await getAvatar()
+    if (ret.code !== 20000) {
+      return
+    }
+    this.$refs.avatarImage.setAttribute('src', `data:${ret.data.type};base64,` + ret.data.data)
   },
   methods: {
     toggleSideBar() {

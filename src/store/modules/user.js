@@ -46,7 +46,11 @@ const actions = {
     const { email, password } = userInfo
     return new Promise((resolve, reject) => {
       login({ email: email.trim(), password: password }).then(response => {
-        const { data } = response
+        const { code, data, message } = response
+        if (code !== 20000) {
+          reject(message)
+          return
+        }
         commit('SET_TOKEN', data.token)
         setToken(data.token)
         resolve()
@@ -68,7 +72,10 @@ const actions = {
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
       getInfo(state.token).then(response => {
-        const { data } = response
+        const { code, data } = response
+        if (code !== 20000) {
+          reject('API query error: ' + code)
+        }
 
         if (!data) {
           reject('Verification failed, please Login again.')

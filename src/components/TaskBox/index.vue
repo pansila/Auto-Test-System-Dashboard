@@ -137,33 +137,41 @@ export default {
       const [organization, team] = this.organization_team
       this.robotlog_term && this.robotlog_term.reset()
       this.runtimelog_term && this.runtimelog_term.reset()
-      this.socket.off('test report')
-      this.socket.on('test report', (data) => {
+      this.socket.off('backlog')
+      this.socket.on('backlog', (data) => {
         if (task_id === data.task_id) {
           if (this.robotlog_term) {
-            if (this.termBuffer_robotlog) {
-              this.robotlog_term.write(this.termBuffer_robotlog)
-              this.termBuffer_robotlog = ''
-            }
             this.robotlog_term.write(data.message)
-          } else {
-            this.termBuffer_robotlog += data.message
           }
         }
-      })
-      this.socket.off('test log')
-      this.socket.on('test log', (data) => {
-        if (task_id === data.task_id) {
-          if (this.runtimelog_term) {
-            if (this.termBuffer_runtimelog) {
-              this.runtimelog_term.write(this.termBuffer_runtimelog)
-              this.termBuffer_runtimelog = ''
+        this.socket.off('test report')
+        this.socket.on('test report', (data) => {
+          if (task_id === data.task_id) {
+            if (this.robotlog_term) {
+              if (this.termBuffer_robotlog) {
+                this.robotlog_term.write(this.termBuffer_robotlog)
+                this.termBuffer_robotlog = ''
+              }
+              this.robotlog_term.write(data.message)
+            } else {
+              this.termBuffer_robotlog += data.message
             }
-            this.runtimelog_term.write(data.message)
-          } else {
-            this.termBuffer_runtimelog += data.message
           }
-        }
+        })
+        this.socket.off('test log')
+        this.socket.on('test log', (data) => {
+          if (task_id === data.task_id) {
+            if (this.runtimelog_term) {
+              if (this.termBuffer_runtimelog) {
+                this.runtimelog_term.write(this.termBuffer_runtimelog)
+                this.termBuffer_runtimelog = ''
+              }
+              this.runtimelog_term.write(data.message)
+            } else {
+              this.termBuffer_runtimelog += data.message
+            }
+          }
+        })
       })
       this.socket.emit('enter', {
         'X-Token': getToken(),
@@ -243,7 +251,9 @@ export default {
 
       this.listLoading = true
       try {
-        const taskqueues = await fetchQueuingTests(this.listQuery)
+        const ret = await fetchQueuingTests(this.listQuery)
+        if (ret.code !== 20000) return
+        const taskqueues = ret.data.task_queues
         taskqueues.sort((a, b) => {
           return b.priority - a.priority
         })

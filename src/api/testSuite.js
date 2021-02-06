@@ -1,9 +1,11 @@
 import request from '@/utils/request'
 import { isJson } from '@/utils/validate'
 
+const api_version = '/api_v1'
+
 export function fetchTests(query) {
   return request({
-    url: '/test/',
+    url: api_version + '/test/',
     method: 'get',
     params: query
   })
@@ -11,7 +13,7 @@ export function fetchTests(query) {
 
 export function fetchTest(query) {
   return request({
-    url: '/test/detail',
+    url: api_version + '/test/detail',
     method: 'get',
     params: query
   })
@@ -19,7 +21,7 @@ export function fetchTest(query) {
 
 export function fetchTestResult(params) {
   return request({
-    url: '/task/result',
+    url: api_version + '/task/result',
     method: 'get',
     responseType: 'document',
     params
@@ -28,7 +30,7 @@ export function fetchTestResult(params) {
 
 export function fetchTestResultFiles(params) {
   return request({
-    url: '/task/result_files',
+    url: api_version + '/task/result_files',
     method: 'get',
     params
   })
@@ -36,7 +38,7 @@ export function fetchTestResultFiles(params) {
 
 export function fetchTestResultFile(params) {
   return request({
-    url: '/task/result_file',
+    url: api_version + '/task/result_file',
     method: 'get',
     responseType: 'blob',
     params
@@ -45,7 +47,7 @@ export function fetchTestResultFile(params) {
 
 export function startTest(data) {
   return request({
-    url: '/task/',
+    url: api_version + '/task/',
     method: 'post',
     data
   })
@@ -53,7 +55,7 @@ export function startTest(data) {
 
 export function fetchTaskList(query) {
   return request({
-    url: '/task/',
+    url: api_version + '/task/',
     method: 'get',
     params: query
   })
@@ -61,7 +63,7 @@ export function fetchTaskList(query) {
 
 export function updateTask(data) {
   return request({
-    url: '/task/',
+    url: api_version + '/task/',
     method: 'patch',
     data
   })
@@ -69,7 +71,7 @@ export function updateTask(data) {
 
 export function fetchEndpoints(query) {
   return request({
-    url: '/endpoint/',
+    url: api_version + '/endpoint/',
     method: 'get',
     params: query
   })
@@ -77,7 +79,7 @@ export function fetchEndpoints(query) {
 
 export function testEndpoint(data) {
   return request({
-    url: '/endpoint/check/',
+    url: api_version + '/endpoint/check/',
     method: 'post',
     data
   })
@@ -85,7 +87,7 @@ export function testEndpoint(data) {
 
 export function updateEndpoint(data) {
   return request({
-    url: '/endpoint/',
+    url: api_version + '/endpoint/',
     method: 'post',
     data
   })
@@ -93,7 +95,7 @@ export function updateEndpoint(data) {
 
 export function deleteEndpoint(data) {
   return request({
-    url: '/endpoint/',
+    url: api_version + '/endpoint/',
     method: 'delete',
     data
   })
@@ -101,7 +103,7 @@ export function deleteEndpoint(data) {
 
 export function authorizeEndpoint(data) {
   return request({
-    url: '/endpoint/authorize',
+    url: api_version + '/endpoint/authorize',
     method: 'post',
     data
   })
@@ -109,7 +111,7 @@ export function authorizeEndpoint(data) {
 
 export function forbidEndpoint(data) {
   return request({
-    url: '/endpoint/forbid',
+    url: api_version + '/endpoint/forbid',
     method: 'post',
     data
   })
@@ -117,7 +119,7 @@ export function forbidEndpoint(data) {
 
 export function fetchQueuingTests(query) {
   return request({
-    url: '/endpoint/queue/',
+    url: api_version + '/endpoint/queue/',
     method: 'get',
     params: query
   })
@@ -125,7 +127,7 @@ export function fetchQueuingTests(query) {
 
 export function fetchEndpointConfig(query) {
   return request({
-    url: '/endpoint/config',
+    url: api_version + '/endpoint/config',
     method: 'get',
     params: query
   })
@@ -133,7 +135,7 @@ export function fetchEndpointConfig(query) {
 
 export function updateTaskQueue(data) {
   return request({
-    url: '/endpoint/queue/',
+    url: api_version + '/endpoint/queue/',
     method: 'post',
     data
   })
@@ -141,7 +143,7 @@ export function updateTaskQueue(data) {
 
 export function uploadFiles(data) {
   return request({
-    url: '/taskresource/',
+    url: api_version + '/taskresource/',
     method: 'post',
     data,
     headers: {
@@ -152,7 +154,7 @@ export function uploadFiles(data) {
 
 export function getTaskResourceList(params) {
   return request({
-    url: '/taskresource/list',
+    url: api_version + '/taskresource/list',
     method: 'get',
     params
   })
@@ -160,7 +162,7 @@ export function getTaskResourceList(params) {
 
 export function fetchTasks(query) {
   return request({
-    url: '/testresult/',
+    url: api_version + '/testresult/',
     method: 'get',
     params: query
   })
@@ -168,7 +170,7 @@ export function fetchTasks(query) {
 
 export function cancelTask(task) {
   return request({
-    url: '/task/',
+    url: api_version + '/task/',
     method: 'delete',
     data: task
   })
@@ -176,7 +178,7 @@ export function cancelTask(task) {
 
 export function fetchScripts(params) {
   return request({
-    url: '/script/',
+    url: api_version + '/script/',
     method: 'get',
     params
   })
@@ -184,7 +186,7 @@ export function fetchScripts(params) {
 
 export function getScript(query, modified) {
   return request({
-    url: '/script/',
+    url: api_version + '/script/',
     method: 'get',
     params: query,
     headers: {
@@ -195,7 +197,7 @@ export function getScript(query, modified) {
 
 export function updateScript(data) {
   return request({
-    url: '/script/',
+    url: api_version + '/script/',
     method: 'post',
     data
   })
@@ -203,7 +205,7 @@ export function updateScript(data) {
 
 export function removeScript(data) {
   return request({
-    url: '/script/',
+    url: api_version + '/script/',
     method: 'delete',
     data
   })
@@ -211,7 +213,7 @@ export function removeScript(data) {
 
 export function uploadScripts(data) {
   return request({
-    url: '/script/upload/',
+    url: api_version + '/script/upload/',
     method: 'post',
     data,
     headers: {
@@ -222,7 +224,7 @@ export function uploadScripts(data) {
 
 export function uploadPackage(data) {
   return request({
-    url: '/store/',
+    url: api_version + '/store/',
     method: 'post',
     data,
     headers: {
@@ -233,7 +235,7 @@ export function uploadPackage(data) {
 
 export function removePackage(data) {
   return request({
-    url: '/store/',
+    url: api_version + '/store/',
     method: 'delete',
     data: data
   })
@@ -241,7 +243,7 @@ export function removePackage(data) {
 
 export function fetchPackages(query) {
   return request({
-    url: '/store/',
+    url: api_version + '/store/',
     method: 'get',
     params: query
   })
@@ -249,7 +251,7 @@ export function fetchPackages(query) {
 
 export function installPackage(data) {
   return request({
-    url: '/store/package',
+    url: api_version + '/store/package',
     method: 'put',
     data: data
   })
@@ -257,7 +259,7 @@ export function installPackage(data) {
 
 export function uninstallPackage(data) {
   return request({
-    url: '/store/package',
+    url: api_version + '/store/package',
     method: 'delete',
     data: data
   })
@@ -265,7 +267,7 @@ export function uninstallPackage(data) {
 
 export function updatePackage(data) {
   return request({
-    url: '/store/package',
+    url: api_version + '/store/package',
     method: 'patch',
     data: data
   })
@@ -273,7 +275,7 @@ export function updatePackage(data) {
 
 export function getPackageInfo(query) {
   return request({
-    url: '/store/package',
+    url: api_version + '/store/package',
     method: 'get',
     params: query
   })
@@ -281,7 +283,7 @@ export function getPackageInfo(query) {
 
 export function downloadFile(params) {
   return request({
-    url: '/setting/download',
+    url: api_version + '/setting/download',
     method: 'get',
     responseType: 'blob',
     params

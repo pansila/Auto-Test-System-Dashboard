@@ -202,8 +202,9 @@ export default {
       this.listLoading = true
       try {
         const ret = await fetchPackages(this.listQuery)
-        this.packages = ret.items
-        this.total = ret.total
+        if (ret.code !== 20000) return
+        this.packages = ret.data.packages
+        this.total = ret.data.total
       } catch (error) {
         console.error(error)
       }
@@ -308,6 +309,7 @@ export default {
         console.error(error)
         return
       }
+      if (ret.code !== 20000) return
       this.viewer.setValue(ret.data.description)
     },
     async install() {

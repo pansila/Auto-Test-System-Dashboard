@@ -82,9 +82,10 @@ export default {
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
       this.listQuery.team = team
-      const data = await fetchTasks(this.listQuery)
-      this.list = data.items
-      this.total = data.total
+      const ret = await fetchTasks(this.listQuery)
+      if (ret.code !== 20000) return
+      this.list = ret.data.test_reports
+      this.total = ret.data.total
     }
   }
 }

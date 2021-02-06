@@ -338,7 +338,8 @@ export default {
 
       const [organization, team] = this.organization_team
       const ret = await fetchEndpoints({ organization, team })
-      this.endpoints = ret.items
+      if (ret.code !== 20000) return
+      this.endpoints = ret.data.endpoints
     }
   },
   async created() {
@@ -346,7 +347,8 @@ export default {
 
     const [organization, team] = this.organization_team
     const ret = await fetchEndpoints({ organization, team })
-    this.endpoints = ret.items
+    if (ret.code !== 20000) return
+    this.endpoints = ret.data.endpoints
   },
   methods: {
     async onSubmit() {
@@ -429,13 +431,14 @@ export default {
       this.listQuery.organization = organization
       this.listQuery.team = team
       try {
-        const data = await fetchTasks(this.listQuery)
-        this.tasks = data.items
+        const ret = await fetchTasks(this.listQuery)
+        if (ret.code !== 20000) return
+        this.tasks = ret.data.test_reports
         this.tasks.forEach(item => {
           this.$set(item, 'edit', false)
           item.oldComment = item.comment
         })
-        this.total = data.total
+        this.total = ret.data.total
       } catch (error) {
         console.error(error)
       }
@@ -447,14 +450,17 @@ export default {
       this.listQuery.organization = organization
       this.listQuery.team = team
       try {
-        this.tests = await fetchTests(this.listQuery)
+        const ret = await fetchTests(this.listQuery)
+        if (ret.code !== 20000) return
+        this.tests = ret.data.test_suites
       } catch (error) {
         console.error(error)
       }
 
       try {
         const ret = await fetchEndpoints({ organization, team })
-        this.endpoints = ret.items
+        if (ret.code !== 20000) return
+        this.endpoints = ret.data.endpoints
       } catch (error) {
         console.error(error)
       }
@@ -580,8 +586,9 @@ export default {
     async handleDownload(index, row) {
       const task = this.tasks[index]
       const [organization, team] = this.organization_team
-      const resp = await fetchTestResultFiles({ task_id: task.id, organization, team })
-      this.test_results = resp.data.files.children
+      const ret = await fetchTestResultFiles({ task_id: task.id, organization, team })
+      if (ret.code !== 20000) return
+      this.test_results = ret.data.files.children
       this.currentTask = task
       this.downloadDialogVisible = true
     },
@@ -597,7 +604,9 @@ export default {
       this.listFormLoading = true
       this.fileList = []
       try {
-        const fileList = await getTaskResourceList({ task_id: this.retrigger_task.id, organization, team })
+        const ret = await getTaskResourceList({ task_id: this.retrigger_task.id, organization, team })
+        if (ret.code !== 20000) return
+        const fileList = ret.data.files
         for (const i in fileList) {
           this.$set(this.fileList, i, { name: fileList[i], url: fileList[i] })
         }
@@ -610,7 +619,10 @@ export default {
 
       try {
         await this.fetchTestList()
-        test = await fetchTest({ id: this.retrigger_task.test_id, organization, team })
+        const ret = await fetchTest({ id: this.retrigger_task.test_id, organization, team })
+        if (ret === 20000) {
+          test = ret.data
+        }
         this.listFormLoading = false
       } catch (error) {
         this.listFormLoading = false

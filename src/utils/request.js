@@ -43,6 +43,13 @@ service.interceptors.response.use(
    * You can also judge the status by HTTP Status Code
    */
   response => {
+    if (response.status === 200 && response.data.code !== 20000) {
+      Message({
+        message: response.data.message || 'error',
+        type: 'error',
+        duration: 5 * 1000
+      })
+    }
     return response.data
   },
   error => {

@@ -270,20 +270,19 @@ export default {
     async fetchData() {
       // if (!this.organization_team) return
       // const [organization, team] = this.organization_team
-      // const tests = await fetchTests({ organization, team })
-      // if (!tests) {
-      //   console.error('no tests found')
-      // }
-      // this.tests = tests
+      // const ret = await fetchTests({ organization, team })
+      // if (ret.code !== 20000) return
+      // this.tests = ret.data.test_suites
       await this.updateScriptContent()
       await this.fetchScriptList()
     },
     async fetchScriptList() {
       if (!this.organization_team && !this.organizations) return
       const [organization, team] = this.organization_team
-      const data = await fetchScripts({ organization, team })
-      this.testScripts = data.test_scripts.children
-      this.testLibraries = data.test_libraries.children
+      const ret = await fetchScripts({ organization, team })
+      if (ret.code !== 20000) return
+      this.testScripts = ret.data.test_scripts.children
+      this.testLibraries = ret.data.test_libraries.children
     },
     async updateScriptContent() {
       if (!this.organization_team) return

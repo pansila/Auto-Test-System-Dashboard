@@ -259,7 +259,10 @@ export default {
     },
     async onSubmit() {
       /** upload files **/
-      if (this.tests.length === 0) return
+      if (this.tests.length === 0) {
+        this.$message.warning('You have not specified any test suites to run')
+        return
+      }
       const [organization, team] = this.organization_team
       for (const idx in this.fileList) {
         const file = this.fileList[idx]
@@ -308,9 +311,9 @@ export default {
       task_data.organization = organization
       task_data.team = team
 
-      let res
+      let ret
       try {
-        res = await startTest(task_data)
+        ret = await startTest(task_data)
       } catch (error) {
         this.$message({
           message: 'Failed to schedule the test',
@@ -319,6 +322,13 @@ export default {
         return
       }
 
+      if (ret.code !== 20000) {
+        this.$message({
+          message: 'Failed to schedule the test',
+          type: 'error'
+        })
+        return
+      }
       this.$message({
         message: 'Schedule the test successfully',
         type: 'success'
@@ -326,9 +336,9 @@ export default {
       this.resource_id = undefined
       this.robotlog_term && this.robotlog_term.reset()
       this.runtimelog_term && this.runtimelog_term.reset()
-      if (res.data.running.length > 0) {
+      if (ret.data.running.length > 0) {
         this.testStatusDialogVisible = true
-        this.task_id = res.data.running[0]
+        this.task_id = ret.data.running[0]
         this.$nextTick(() => this.initTerminal1())
       } else {
         this.$store.dispatch('settings/changeSetting', {
@@ -343,19 +353,18 @@ export default {
     async fetchData() {
       if (!this.organization_team) return
       const [organization, team] = this.organization_team
-      const tests = await fetchTests({ organization, team })
-      if (!tests) {
-        console.error('no tests found')
-      }
-      this.tests = tests
+      let ret = await fetchTests({ organization, team })
+      if (ret.code !== 20000) return
+      this.tests = ret.data.test_suites
       if (this.tests.length > 0) {
         this.form.test_suite_idx = 0
       } else {
         this.form.test_suite_idx = null
       }
 
-      const ret = await fetchEndpoints({ organization, team })
-      this.endpoints = ret.items.filter(item => {
+      ret = await fetchEndpoints({ organization, team })
+      if (ret.code !== 20000) return
+      this.endpoints = ret.data.endpoints.filter(item => {
         if (!item.name) {
           return false
         }

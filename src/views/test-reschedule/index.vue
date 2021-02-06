@@ -90,7 +90,9 @@ export default {
 
       this.listLoading = true
       try {
-        this.taskqueues = await fetchQueuingTests(this.listQuery)
+        const ret = await fetchQueuingTests(this.listQuery)
+        if (ret.code !== 20000) return
+        this.taskqueues = ret.data.task_queues
         addAttrs(this.taskqueues, { expand: true })
         this.list = treeToArray(this.taskqueues)
       } catch (error) {

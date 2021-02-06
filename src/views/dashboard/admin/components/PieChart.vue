@@ -107,16 +107,17 @@ export default {
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
       this.listQuery.team = team
-      const items = await fetchTaskList(this.listQuery)
+      const ret = await fetchTaskList(this.listQuery)
+      if (ret.code !== 20000) return
       let succeeded = 0
       let failed = 0
       let running = 0
       let waiting = 0
-      for (const i in items) {
-        succeeded += items[i].succeeded
-        failed += items[i].failed
-        running += items[i].running
-        waiting += items[i].waiting
+      for (const i in ret.data.stats) {
+        succeeded += ret.data.stats[i].succeeded
+        failed += ret.data.stats[i].failed
+        running += ret.data.stats[i].running
+        waiting += ret.data.stats[i].waiting
       }
       this.succeeded = succeeded
       this.failed = failed

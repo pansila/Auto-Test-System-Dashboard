@@ -210,8 +210,9 @@ export default {
       this.listLoading = true
       try {
         const ret = await fetchEndpoints(this.listQuery)
-        this.endpoints = ret.items
-        this.total = ret.total
+        if (ret.code !== 20000) return
+        this.endpoints = ret.data.endpoints
+        this.total = ret.data.total
       } catch (error) {
         console.error(error)
       }
@@ -220,7 +221,9 @@ export default {
     async fetchTestList() {
       this.listLoading = true
       try {
-        this.tests = await fetchTests(this.listQuery)
+        const ret = await fetchTests(this.listQuery)
+        if (ret.code !== 20000) return
+        this.tests = ret.data.test_suites
       } catch (error) {
         console.error(error)
       }

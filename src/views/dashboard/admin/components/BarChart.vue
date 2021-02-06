@@ -123,10 +123,11 @@ export default {
       const [organization, team] = this.organization_team
       this.listQuery.organization = organization
       this.listQuery.team = team
-      const items = await fetchTaskList(this.listQuery)
-      for (const i in items) {
-        this.succeeded[i] = items[i].succeeded
-        this.failed[i] = items[i].failed
+      const ret = await fetchTaskList(this.listQuery)
+      if (ret.code !== 20000) return
+      for (const i in ret.data.stats) {
+        this.succeeded[i] = ret.data.stats[i].succeeded
+        this.failed[i] = ret.data.stats[i].failed
       }
       this.chart.setOption({
         series: [{

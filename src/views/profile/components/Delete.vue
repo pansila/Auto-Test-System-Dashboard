@@ -90,14 +90,16 @@ export default {
     ])
   },
   async created() {
-    const organizations = await fetchJoinedOrganizations()
-    this.organizations = organizations.filter(org => {
+    const ret = await fetchJoinedOrganizations()
+    if (ret.code !== 20000) return
+    this.organizations = ret.data.organizations.filter(org => {
       if (org.owner_email === this.email) return true
       return false
     })
     this.organizations.forEach(async(org) => {
-      this.users[org.label] = await fetchOrganizationUsers({ organization_id: org.value })
-      this.users[org.label] = this.users[org.label].filter(user => {
+      const ret = await fetchOrganizationUsers({ organization_id: org.value })
+      if (ret.code !== 20000) return
+      this.users[org.label] = ret.data.users.filter(user => {
         if (user.email !== this.email) return true
         return false
       })

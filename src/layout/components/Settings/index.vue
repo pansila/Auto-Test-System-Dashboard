@@ -121,7 +121,9 @@ export default {
     }
   },
   async created() {
-    this.organizations = await fetchJoinedOrganizationTeams()
+    const ret = await fetchJoinedOrganizationTeams()
+    if (ret.code !== 20000) return
+    this.organizations = ret.data.organization_team
   },
   methods: {
     themeChange(val) {

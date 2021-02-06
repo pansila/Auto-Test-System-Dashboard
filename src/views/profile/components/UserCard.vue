@@ -6,7 +6,7 @@
 
     <div class="user-profile">
       <div class="box-center">
-        <pan-thumb :image="avatar_url" :height="'100px'" :width="'100px'" :hoverable="false">
+        <pan-thumb :image-url="avatar_url" :height="'100px'" :width="'100px'" :hoverable="false">
           <div>Hello</div>
           {{ user.name }}
         </pan-thumb>
@@ -52,6 +52,7 @@
 
 <script>
 import PanThumb from '@/components/PanThumb'
+import { getAvatar } from '@/api/user'
 
 export default {
   components: { PanThumb },
@@ -72,8 +73,15 @@ export default {
   },
   data() {
     return {
-      avatar_url: process.env.VUE_APP_BASE_API + '/user/avatar'
+      avatar_url: ''
     }
+  },
+  async mounted() {
+    const ret = await getAvatar()
+    if (ret.code !== 20000) {
+      return
+    }
+    this.avatar_url = `data:${ret.data.type}.;base64,` + ret.data.data
   }
 }
 </script>

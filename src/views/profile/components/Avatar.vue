@@ -10,7 +10,8 @@
       <el-radio v-model="radio" label="1">{{ $t('profile.customAvatar') }}</el-radio>
       <el-upload
         class="avatar-uploader radio-indent"
-        :action="avatar_url"
+        action="#"
+        :http-request="uploadUserAvatar"
         :headers="tokenHeader"
         :on-success="handleAvatarSuccess"
         :show-file-list="false"
@@ -27,7 +28,7 @@
 </template>
 
 <script>
-import { useAvatar } from '@/api/user'
+import { useAvatar, uploadAvatar } from '@/api/user'
 import { getToken } from '@/utils/auth'
 
 export default {
@@ -88,6 +89,11 @@ export default {
         this.$message.error('Avatar size should be less than 2MB')
       }
       return isAllowed && isLt2M
+    },
+    async uploadUserAvatar(data) {
+      const formData = new FormData()
+      formData.append('file', data.file)
+      await uploadAvatar(formData)
     }
   }
 }

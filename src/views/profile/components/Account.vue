@@ -61,7 +61,10 @@ export default {
   methods: {
     async submit() {
       try {
-        await updateAccount(this.user)
+        const ret = await updateAccount(this.user)
+        if (ret.code !== 20000) {
+          return
+        }
         this.$message({
           message: 'User information has been updated successfully',
           type: 'success',

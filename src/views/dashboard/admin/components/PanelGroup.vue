@@ -90,16 +90,17 @@ export default {
       this.listQuery.end_date = Date.now()
       this.listQuery.organization = organization
       this.listQuery.team = team
-      const items = await fetchTaskList(this.listQuery)
+      const ret = await fetchTaskList(this.listQuery)
+      if (ret.code !== 20000) return
       let finished = 0
       let failed = 0
       let running = 0
       let waiting = 0
-      for (const i in items) {
-        finished += items[i].succeeded + items[i].failed
-        failed += items[i].failed
-        running += items[i].running
-        waiting += items[i].waiting
+      for (const i in ret.data.stats) {
+        finished += ret.data.stats[i].succeeded + ret.data.stats[i].failed
+        failed += ret.data.stats[i].failed
+        running += ret.data.stats[i].running
+        waiting += ret.data.stats[i].waiting
       }
       this.finished = finished
       this.failed = failed

@@ -301,7 +301,9 @@ export default {
       if (!data) return
       const { organization, team, language, proprietary } = data
 
-      this.paths = await getDocRoots({ language, organization, team, proprietary })
+      const ret = await getDocRoots({ language, organization, team, proprietary })
+      if (ret.code !== 20000) return
+      this.paths = ret.data.paths
       this.pathRoot = 0
       this.newDocDialogVisible = true
     },
@@ -405,7 +407,7 @@ export default {
       data.path = data.path.replace(/^[\/\\]+/g, '')
       const ret = await getPictures(data)
       if (ret.code !== 20000) return
-      this.imageList = ret.data.fileList.map(file => {
+      this.imageList = ret.data.file_list.map(file => {
         file.uid = Date.now() + this.tempIndex++
         const blob = b64toBlob(file.data, file.type)
         return {

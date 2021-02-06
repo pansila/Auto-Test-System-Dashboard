@@ -26,7 +26,7 @@
           <template slot-scope="scope">
             <el-row type="flex" justify="left" align="middle" :gutter="5">
               <el-col style="width: auto">
-                <img :src="avatar_url + '/' + scope.row.value" class="user-avatar">
+                <img :src="scope.row.avatarUrl" class="user-avatar">
               </el-col>
               <el-col>
                 <span class="link-type" @click="onTeam(scope.row)">{{ scope.row.label }}</span>
@@ -86,7 +86,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { newTeam, joinTeam, fetchJoinedTeams, fetchAllTeams, quitTeam, deleteTeam, fetchJoinedOrganizations, fetchJoinedOrganizationTeams } from '@/api/user'
+import { newTeam, joinTeam, fetchJoinedTeams, fetchAllTeams, quitTeam, deleteTeam, fetchJoinedOrganizations, fetchJoinedOrganizationTeams, getTeamAvatar } from '@/api/user'
 
 export default {
   props: {
@@ -147,7 +147,9 @@ export default {
     async organization(val) {
       if (val) {
         try {
-          this.all_teams = await fetchAllTeams({ organization_id: val })
+          const ret = await fetchAllTeams({ organization_id: val })
+          if (ret.code !== 20000) return
+          this.all_teams = ret.data.teams
         } catch (e) {
           this.all_teams = []
         }
@@ -170,9 +172,22 @@ export default {
   },
   methods: {
     async getTeams() {
-      this.joined_organizations = await fetchJoinedOrganizations()
-      this.joined_teams = await fetchJoinedTeams()
-      this.organizations = await fetchJoinedOrganizationTeams()
+      let ret = await fetchJoinedOrganizations()
+      if (ret.code !== 20000) return
+      this.joined_organizations = ret.data.organizations
+
+      ret = await fetchJoinedOrganizationTeams()
+      if (ret.code !== 20000) return
+      this.organizations = ret.data.organization_team
+
+      ret = await fetchJoinedTeams()
+      if (ret.code !== 20000) return
+      this.joined_teams = await Promise.all(ret.data.teams.map(async team => {
+        const ret = await getTeamAvatar(team.value)
+        if (ret.code !== 20000) return
+        team.avatarUrl = `data:${ret.data.type};base64,` + ret.data.data
+        return team
+      }))
     },
     async onNewTeamSubmit() {
       try {

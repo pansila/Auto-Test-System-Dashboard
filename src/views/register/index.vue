@@ -183,8 +183,9 @@ export default {
   methods: {
     async validateEmailOnline(value) {
       try {
-        await checkEmail(value)
-        return true
+        const ret = await checkEmail(value)
+        if (ret.code === 50000) return true
+        return false
       } catch {
         return false
       }
@@ -255,6 +256,7 @@ export default {
             console.error(error)
           }
           this.loading = false
+          this.$message('Account has been created')
         } else {
           console.log('error submit!!')
           return false
